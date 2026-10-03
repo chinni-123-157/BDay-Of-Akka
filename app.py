@@ -10,16 +10,22 @@ import logging
 import os
 import re
 import smtplib
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from email.message import EmailMessage
+from functools import wraps
 from pathlib import Path
 
-from flask import Flask, jsonify, render_template, request
+try:
+    from authlib.integrations.flask_client import OAuth
+except ModuleNotFoundError:  # Keeps password login usable until dependencies are installed.
+    OAuth = None
+from flask import Flask, current_app, jsonify, redirect, render_template, request, session, url_for
 
 BASE_DIR = Path(__file__).resolve().parent
 VIDEO_EXTENSIONS = {".mp4", ".webm", ".ogg", ".mov"}
 RECIPIENTS_FILE = BASE_DIR / "data" / "approved_recipients.json"
 EMAIL_PATTERN = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+oauth = OAuth() if OAuth is not None else None
 
 
 def create_app() -> Flask:
@@ -34,17 +40,110 @@ def create_app() -> Flask:
         SMTP_USERNAME=os.getenv("SMTP_USERNAME", ""),
         SMTP_PASSWORD=os.getenv("SMTP_PASSWORD", ""),
         SMTP_FROM=os.getenv("SMTP_FROM", ""),
+        SITE_PASSWORD=os.getenv("SITE_PASSWORD", ""),
+        SIGNUP_KEY=os.getenv("SIGNUP_KEY", os.getenv("SITE_PASSWORD", "")),
+        GOOGLE_CLIENT_ID=os.getenv("GOOGLE_CLIENT_ID", ""),
+        GOOGLE_CLIENT_SECRET=os.getenv("GOOGLE_CLIENT_SECRET", ""),
+        PERMANENT_SESSION_LIFETIME=timedelta(hours=12),
     )
+    if oauth is not None:
+        oauth.init_app(app)
+    if oauth is not None and app.config["GOOGLE_CLIENT_ID"] and app.config["GOOGLE_CLIENT_SECRET"]:
+        oauth.register(
+            name="google",
+            client_id=app.config["GOOGLE_CLIENT_ID"],
+            client_secret=app.config["GOOGLE_CLIENT_SECRET"],
+            server_metadata_url="https://accounts.google.com/.well-known/openid-configuration",
+            client_kwargs={"scope": "openid email profile"},
+        )
 
     @app.get("/")
     def home():
+        if is_authenticated():
+            return redirect(url_for("celebrate"))
+        return render_template(
+            "login.html",
+            google_enabled=bool(oauth is not None and app.config["GOOGLE_CLIENT_ID"] and app.config["GOOGLE_CLIENT_SECRET"]),
+        )
+
+    @app.post("/login/password")
+    def password_login():
+        submitted_password = str(request.form.get("password", ""))
+        configured_password = app.config["SITE_PASSWORD"]
+        if configured_password and secure_compare(submitted_password, configured_password):
+            create_login("Birthday Guest")
+            return redirect(url_for("celebrate"))
+        return redirect(url_for("error_page", reason="Wrong password ra babu — try once more."))
+
+    @app.get("/signup")
+    def signup():
+        if is_authenticated():
+            return redirect(url_for("celebrate"))
+        return render_template("signup.html")
+
+    @app.post("/signup")
+    def complete_signup():
+        email = str(request.form.get("email", "")).strip().lower()
+        invite_key = str(request.form.get("invite_key", ""))
+        recipient = next((entry for entry in approved_recipients() if entry["email"] == email), None)
+        if recipient and app.config["SIGNUP_KEY"] and secure_compare(invite_key, app.config["SIGNUP_KEY"]):
+            create_login(recipient["name"])
+            persist_event(
+                app,
+                {
+                    "name": recipient["name"],
+                    "action": "signup",
+                    "source": request.remote_addr or "unknown",
+                    "created_at": datetime.now(timezone.utc).isoformat(),
+                },
+            )
+            return redirect(url_for("celebrate"))
+        return redirect(url_for("error_page", reason="Invite email or secret key is not correct. Meme class ki welcome! 🤭"))
+
+    @app.get("/login/google")
+    def google_login():
+        google = oauth.create_client("google") if oauth is not None else None
+        if google is None:
+            return redirect(url_for("error_page", reason="Google sign-in is not configured yet."))
+        return google.authorize_redirect(url_for("google_callback", _external=True))
+
+    @app.get("/auth/google/callback")
+    def google_callback():
+        google = oauth.create_client("google") if oauth is not None else None
+        if google is None:
+            return redirect(url_for("error_page", reason="Google sign-in is taking a chai break."))
+        try:
+            token = google.authorize_access_token()
+            user_info = token.get("userinfo") or google.get("userinfo").json()
+            email = str(user_info.get("email", "")).strip().lower()
+        except Exception as exc:
+            app.logger.warning("Google login failed: %s", exc)
+            return redirect(url_for("error_page", reason="Google login did not finish. Try again, babu."))
+
+        recipient = next((entry for entry in approved_recipients() if entry["email"] == email), None)
+        if recipient is None:
+            return redirect(url_for("error_page", reason="This Gmail is not in the birthday guest list."))
+        create_login(recipient["name"])
+        return redirect(url_for("celebrate"))
+
+    @app.get("/logout")
+    def logout():
+        session.clear()
+        return redirect(url_for("home"))
+
+    @app.get("/celebrate")
+    @login_required
+    def celebrate():
         return render_template("home.html")
 
     @app.get("/error")
     def error_page():
-        return render_template("error.html"), 200
+        if is_authenticated():
+            return redirect(url_for("celebrate"))
+        return render_template("error.html", reason=request.args.get("reason", "")), 200
 
     @app.get("/wish")
+    @login_required
     def wish():
         media_dir = BASE_DIR / "static" / "media"
         videos = [
@@ -55,10 +154,12 @@ def create_app() -> Flask:
         return render_template("wish.html", videos=videos, recipients=approved_recipients())
 
     @app.get("/questions")
+    @login_required
     def questions():
         return render_template("questions.html")
 
     @app.get("/mail")
+    @login_required
     def mail():
         name = clean_name(request.args.get("name", "Friend"))
         if name != "Friend" and recipient_by_name(name) is None:
@@ -67,6 +168,7 @@ def create_app() -> Flask:
         return render_template("mail.html", name=name, delivery=delivery)
 
     @app.post("/api/send-thanks")
+    @login_required
     def send_thanks():
         payload = request.get_json(silent=True) or {}
         name = clean_name(payload.get("name", ""))
@@ -89,6 +191,8 @@ def create_app() -> Flask:
 
     @app.errorhandler(404)
     def not_found(_error):
+        if is_authenticated():
+            return redirect(url_for("celebrate"))
         return render_template("error.html"), 404
 
     return app
@@ -98,16 +202,43 @@ def clean_name(value: object) -> str:
     return str(value).strip().title()[:40]
 
 
+def is_authenticated() -> bool:
+    return session.get("authenticated") is True
+
+
+def create_login(display_name: str) -> None:
+    session.clear()
+    session.permanent = True
+    session["authenticated"] = True
+    session["display_name"] = display_name
+
+
+def secure_compare(first: str, second: str) -> bool:
+    import hmac
+
+    return hmac.compare_digest(first.encode("utf-8"), second.encode("utf-8"))
+
+
+def login_required(view):
+    @wraps(view)
+    def wrapped_view(*args, **kwargs):
+        if not is_authenticated():
+            return redirect(url_for("error_page", reason="First login avvu ra babu, then surprise open avuthundi!"))
+        return view(*args, **kwargs)
+
+    return wrapped_view
+
+
 def approved_recipients() -> list[dict[str, str]]:
     """Return only validated entries from the single editable recipient file."""
     try:
         raw_entries = json.loads(RECIPIENTS_FILE.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
-        app.logger.warning("Approved recipient list could not be read: %s", exc)
+        current_app.logger.warning("Approved recipient list could not be read: %s", exc)
         return []
 
     if not isinstance(raw_entries, dict):
-        app.logger.warning("Approved recipient list must contain a JSON object.")
+        current_app.logger.warning("Approved recipient list must contain a JSON object.")
         return []
 
     recipients: list[dict[str, str]] = []
