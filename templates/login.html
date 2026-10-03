@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% block title %}Birthday Surprise — Sign In{% endblock %}
+{% block page %}login{% endblock %}
+{% block content %}
+<section class="login-screen reveal">
+  <div class="access-title glass-panel">
+    <p class="eyebrow">✨ Private birthday vault</p>
+    <h1>To see the surprise,<br><em>unlock the web page.</em></h1>
+    <p>One successful sign-in opens all birthday wishes, videos, and silly questions.</p>
+  </div>
+  <div class="access-grid">
+    <section class="google-access access-card glass-panel">
+      <div class="access-glow" aria-hidden="true"></div>
+      <div class="google-orb" aria-hidden="true">G</div>
+      <h2>Sign in with Google</h2>
+      <p>For invited birthday guests only.</p>
+      {% if google_enabled %}
+      <a class="button google-continue" href="{{ url_for('google_login') }}">Continue with Google <span>→</span></a>
+      {% else %}
+      <button class="button google-continue unavailable" type="button" disabled title="Add Google OAuth keys in Render to enable this option.">Google sign-in coming soon</button>
+      {% endif %}
+    </section>
+    <section class="password-access access-card glass-panel">
+      <div class="lock-orb">✦</div>
+      <p class="eyebrow">Or use the secret key</p>
+      <h2>Enter password</h2>
+      <p class="form-hint">The birthday password works for every invited guest.</p>
+      <form class="password-form" action="{{ url_for('password_login') }}" method="post">
+        <label for="password">Birthday password</label>
+        <div class="password-box"><span>⌁</span><input id="password" name="password" type="password" autocomplete="current-password" placeholder="Enter password" required><button class="peek-button" type="button" aria-label="Show password">◉</button></div>
+        <button class="button primary login-submit" type="submit">Unlock birthday page <span>→</span></button>
+      </form>
+    </section>
+  </div>
+  <p class="access-footer">Access not working? Bujji Bot says: “ఒక పని చెయ్యి ఇక్కడ నువ్వు… password correct గా చూడు!” 🤭</p>
+</section>
+{% endblock %}
