@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block title %}A Divine Birthday Surprise{% endblock %}
+{% block page %}home{% endblock %}
+{% block content %}
+<section class="hero glass-panel reveal">
+  <div class="hero-copy">
+    <p class="eyebrow">✨ A little Vrindavan magic for your special day</p>
+    <h1>Happy Birthday,<br><em>beautiful soul!</em></h1>
+    <p class="hero-text">A tiny universe of wishes, giggles, and surprises is waiting for you. Press the peacock feather when you are ready.</p>
+    <div class="hero-actions">
+      <a class="button primary" href="{{ url_for('wish') }}">Open birthday wishes <span>→</span></a>
+      <a class="button ghost" href="{{ url_for('questions') }}">Play the question game</a>
+    </div>
+  </div>
+  <div class="hero-art" aria-label="Decorative birthday cake illustration">
+    <div class="moon">☾</div>
+    <div class="flute">━━━━━━━━</div>
+    <div class="cake"><i>✦</i><b></b><span></span><strong>🎂</strong></div>
+    <p>Made with lots of love<br>and slightly too much confetti.</p>
+  </div>
+</section>
+<section class="path-grid reveal">
+  <a class="path-card" href="{{ url_for('wish') }}"><span class="path-icon">🎞️</span><h2>Watch the wishes</h2><p>A beautiful birthday-video playlist.</p></a>
+  <a class="path-card" href="{{ url_for('questions') }}"><span class="path-icon">😄</span><h2>Answer some drama</h2><p>A very serious question game. Totally.</p></a>
+  <a class="path-card" href="{{ url_for('error_page') }}"><span class="path-icon">🤭</span><h2>Visit Meme Zone</h2><p>Telugu-flavoured comedy, on demand.</p></a>
+</section>
+{% endblock %}

@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block title %}Birthday Wishes{% endblock %}
+{% block page %}wish{% endblock %}
+{% block content %}
+<section class="wish-layout reveal">
+  <div class="section-heading compact"><p class="eyebrow">Press play, feel loved</p><h1>Birthday wish cinema ✨</h1></div>
+  <aside class="people left">
+    {% for recipient in recipients[:1] %}
+    <button class="person selected" data-person="{{ recipient.name }}">{{ recipient.name }}</button>
+    {% endfor %}
+  </aside>
+  <section class="video-stage glass-panel" aria-label="Birthday video playlist">
+    {% if videos %}
+      <div class="video-frame"><video id="birthdayVideo" controls playsinline preload="metadata" data-playlist='{{ videos|tojson }}'><source src="{{ url_for('static', filename=videos[0]) }}"></video><div class="video-fade" aria-hidden="true"></div></div>
+      <div class="playlist-status"><span class="pulse-dot"></span><span id="videoStatus">Wish 1 of {{ videos|length }}</span><button class="sound-button" id="unmuteButton" type="button">🔊 Sound on</button></div>
+    {% else %}
+      <div class="video-empty"><span>🎬</span><h2>Your birthday cinema is ready</h2><p>Add .mp4 or .webm videos to <code>static/media</code>, refresh, and they will play here automatically.</p></div>
+    {% endif %}
+    <div class="wish-actions"><button class="button heart-action" data-action="like">♡ <span>Like</span></button><button class="button primary send-action" data-action="send">Send thank you <span>✈</span></button></div>
+  </section>
+  <aside class="people right">
+    {% for recipient in recipients[1:] %}
+    <button class="person" data-person="{{ recipient.name }}">{{ recipient.name }}</button>
+    {% endfor %}
+  </aside>
+</section>
+{% endblock %}

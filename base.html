@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#251048">
+    <title>{% block title %}Birthday Surprise{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  </head>
+  <body class="wallpaper" data-page="{% block page %}{% endblock %}">
+    <div class="wallpaper-layer" aria-hidden="true"></div>
+    <div class="liquid-orbs" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+    <div class="sparkles" aria-hidden="true"></div>
+    <header class="site-header">
+      <a class="brand" href="{{ url_for('home') }}" aria-label="Birthday home"><span>🦚</span> Birthday Leela</a>
+      <nav aria-label="Main navigation">
+        <a href="{{ url_for('home') }}">Home</a>
+        <a href="{{ url_for('wish') }}">Wishes</a>
+        <a href="{{ url_for('questions') }}">Questions</a>
+        <a href="{{ url_for('error_page') }}">Meme Zone</a>
+      </nav>
+    </header>
+    <main class="page-shell">{% block content %}{% endblock %}</main>
+    <div class="toast" role="status" aria-live="polite"></div>
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    {% block scripts %}{% endblock %}
+  </body>
+</html>

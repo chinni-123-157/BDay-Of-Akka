@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% block title %}Thank You, {{ name }}!{% endblock %}
+{% block page %}mail{% endblock %}
+{% block content %}
+<section class="mail-page glass-panel reveal">
+  <div class="mail-icon">💌</div>
+  <p class="eyebrow">Message sent with cake crumbs & confetti</p>
+  <h1>Thank you, <em>{{ name }}</em>!</h1>
+  {% if delivery == 'sent' %}
+  <p>Your personalized thank-you mail is on its way. Check the inbox (and maybe the spam folder—it loves drama).</p>
+  {% elif delivery == 'recipient-not-configured' %}
+  <p>Your thank-you was prepared! Add this person’s email in <code>RECIPIENT_EMAILS</code> on Render to deliver it automatically.</p>
+  {% else %}
+  <p>Your thank-you has been recorded. Connect SMTP in Render to send the personalized email automatically.</p>
+  {% endif %}
+  <div class="mail-preview"><span>To</span><strong>{{ name }}</strong><span>Subject</span><strong>Thank you, {{ name }}! 🎉</strong><p>Thanks for making this birthday feel extra magical.</p></div>
+  <a class="button primary" href="{{ url_for('home') }}">Back to birthday home</a>
+</section>
+{% endblock %}

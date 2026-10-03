@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% block title %}The Most Important Questions{% endblock %}
+{% block page %}questions{% endblock %}
+{% block content %}
+<section class="question-layout reveal">
+  <div class="section-heading"><p class="eyebrow">Scientific study: 100% biased</p><h1>Questions for the birthday queen 👑</h1><p>Answer honestly. The "No" button has a tiny commitment issue.</p></div>
+  <section class="question-card glass-panel" id="questionCard">
+    <div class="question-count"><span id="questionNumber">01</span> / 03</div>
+    <div class="question-emoji" id="questionEmoji">✨</div>
+    <h2 id="questionText">Most beautiful girl is you — Yes or No?</h2>
+    <div class="answer-zone" id="answerZone"><button class="button primary answer-yes" id="yesButton">Yes, obviously ✨</button><button class="button no-button" id="noButton">No</button></div>
+    <p class="question-response" id="questionResponse" aria-live="polite"></p>
+  </section>
+  <button class="secret-button" id="secretButton" type="button">🔐 Secret message button</button>
+  <div class="secret-note" id="secretNote" role="status">పార్ట్ లేదు ఆ అక్కాaaaa! 🤭</div>
+</section>
+{% endblock %}
