@@ -117,8 +117,17 @@
 
   const questions = [
     ['✨', 'Most beautiful girl is you — Yes or No?', 'I knew it. Even the moon agrees. 🌙'],
-    ['🎂', 'Is birthday cake healthier when shared with me?', 'Correct answer. Science has been informed. 🍰'],
-    ['👑', 'Should your smile be declared a national treasure?', 'Petition filed. Approval is obvious. ✨']
+    ['😄', 'Should your smile be declared a national treasure?', 'Petition filed. Approval is obvious. ✨'],
+    ['🎂', 'Is birthday cake healthier when shared with you?', 'Correct answer. Science has been informed. 🍰'],
+    ['👑', 'If cuteness were an exam, would you top it without studying?', 'Full marks. The examiner is also blushing. 😌'],
+    ['📸', 'Do mirrors feel lucky when you look into them?', 'Yes! Their daily motivation is complete.'],
+    ['🦚', 'Should the peacock ask you for style tips?', 'It has already booked a consultation. ✨'],
+    ['🍫', 'Can one birthday person legally eat the last chocolate?', 'Court verdict: absolutely yes, Your Highness.'],
+    ['🎶', 'Does your playlist become better the moment you press play?', 'The speakers said “thank you, queen.” 🎵'],
+    ['🌙', 'Is the moon slightly jealous of your glow?', 'Very jealous. It is requesting better lighting.'],
+    ['🤳', 'Do selfies look happier after you enter the frame?', 'Camera confirmed: happiness detected. 📷'],
+    ['🎉', 'Should every boring day include a little of your drama?', 'Yes. Otherwise where is the entertainment? 🤭'],
+    ['💖', 'Final answer: are you the birthday queen today?', 'Correct! Crown secured. Confetti activated. 🥳']
   ];
   let questionIndex = 0;
   const yesButton = document.getElementById('yesButton');
@@ -144,5 +153,19 @@
 
   document.getElementById('secretButton')?.addEventListener('click', () => {
     document.getElementById('secretNote').classList.toggle('open');
+  });
+
+  document.querySelector('.peek-button')?.addEventListener('click', () => {
+    const password = document.getElementById('password');
+    const showing = password.type === 'text';
+    password.type = showing ? 'password' : 'text';
+    document.querySelector('.peek-button').textContent = showing ? '◉' : '◌';
+  });
+
+  document.querySelector('.signup-peek')?.addEventListener('click', () => {
+    const inviteKey = document.getElementById('invite_key');
+    const showing = inviteKey.type === 'text';
+    inviteKey.type = showing ? 'password' : 'text';
+    document.querySelector('.signup-peek').textContent = showing ? '◉' : '◌';
   });
 })();
