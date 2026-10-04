@@ -2,25 +2,32 @@
 {% block content %}
 <section class="glass card hero">
   <p class="flute">🦚</p>
-  <h1>Happy Birthday!</h1>
-  <p class="sub">Radha Krishna bless this day. Sign in to open your surprise.</p>
+  {% if bday %}<h1>🎂 {{ bday }}</h1><p class="sub">పుట్టినరోజు శుభాకాంక్షలు! Sign in to open your surprise.</p>
+  {% else %}<h1>Happy Birthday!</h1><p class="sub">Radha Krishna bless this day. Sign in to open your surprise.</p>{% endif %}
+  {% if msg %}<p class="notice">{{ msg }}</p>{% endif %}
   <div class="tabs">
     <button class="tab {{ 'on' if tab=='login' }}" data-t="login">Log in</button>
     <button class="tab {{ 'on' if tab=='signup' }}" data-t="signup">Sign up</button>
   </div>
   <form id="login" class="pane {{ 'on' if tab=='login' }}" method="post" action="{{ url_for('login') }}">
-    <input name="email" type="email" placeholder="Email" required>
-    <input name="password" type="password" placeholder="Password" required>
+    <input name="email" type="email" placeholder="Email" autocomplete="email" required>
+    <label class="lbl">College ID</label>
+    <div class="ids" data-name="college_id" role="group" aria-label="College ID, 10 characters"></div>
     <button class="btn">Log in</button>
   </form>
   <form id="signup" class="pane {{ 'on' if tab=='signup' }}" method="post" action="{{ url_for('signup') }}">
-    <input name="name" placeholder="Your name" required>
-    <input name="email" type="email" placeholder="Email" required>
-    <input name="password" type="password" placeholder="Choose a password" required>
-    <input name="key" type="password" placeholder="Secret key (ask the birthday host)" required>
-    <button class="btn">Create account</button>
+    <input name="name" placeholder="Full name" autocomplete="name" required>
+    <input name="email" type="email" placeholder="Email" autocomplete="email" required>
+    <label class="lbl">College ID</label>
+    <div class="ids" data-name="college_id" role="group" aria-label="College ID, 10 characters"></div>
+    <button class="btn">Ask permission to join</button>
   </form>
-  {% if google %}<a class="btn ghost" href="{{ url_for('google_login') }}"><b class="g">G</b> Continue with Google</a>{% endif %}
+  <p class="sub small">New accounts need the host's approval before you can see the pages.</p>
+  <a class="adminlink" href="{{ url_for('admin_login') }}">Admin login</a>
+  {% if google %}
+  <a class="btn ghost" href="{{ url_for('google_login', intent='signup') }}"><b class="g">G</b> Sign up with Google</a>
+  <a class="btn ghost" href="{{ url_for('google_login', intent='login') }}"><b class="g">G</b> Log in with Google</a>
+  {% endif %}
 </section>
 {% endblock %}
 {% block scripts %}<script>
@@ -29,4 +36,3 @@ document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{
   b.classList.add('on'); document.getElementById(b.dataset.t).classList.add('on');
 });
 </script>{% endblock %}
-
