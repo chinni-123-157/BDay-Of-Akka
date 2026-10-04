@@ -1,17 +1,31 @@
-{% extends 'base.html' %}
-{% block title %}The Most Important Questions{% endblock %}
-{% block page %}questions{% endblock %}
+{% extends "base.html" %}
+{% block title %}Questions{% endblock %}
 {% block content %}
-<section class="question-layout reveal">
-  <div class="section-heading"><p class="eyebrow">Scientific study: 100% biased</p><h1>Questions for the birthday queen 👑</h1><p>Answer honestly. The "No" button has a tiny commitment issue.</p></div>
-  <section class="question-card glass-panel" id="questionCard">
-    <div class="question-count"><span id="questionNumber">01</span> / 03</div>
-    <div class="question-emoji" id="questionEmoji">✨</div>
-    <h2 id="questionText">Most beautiful girl is you — Yes or No?</h2>
-    <div class="answer-zone" id="answerZone"><button class="button primary answer-yes" id="yesButton">Yes, obviously ✨</button><button class="button no-button" id="noButton">No</button></div>
-    <p class="question-response" id="questionResponse" aria-live="polite"></p>
-  </section>
-  <button class="secret-button" id="secretButton" type="button">🔐 Secret message button</button>
-  <div class="secret-note" id="secretNote" role="status">పార్ట్ లేదు ఆ అక్కాaaaa! 🤭</div>
+<section class="glass card quiz">
+  <p class="sub" id="count"></p>
+  <h2 id="q"></h2>
+  <div class="answers">
+    <button class="btn yes" id="yes">Yes</button>
+    <button class="btn no" id="no">No</button>
+  </div>
+  <div id="pop" class="pop" hidden></div>
+  <button class="btn ghost" id="secret">Secret message</button>
 </section>
+<div id="toast" class="toast" hidden></div>
 {% endblock %}
+{% block scripts %}<script>
+const Q={{ qs|tojson }}; let i=0;
+const $=id=>document.getElementById(id), no=$('no'), pop=$('pop');
+function show(){
+  if(i>=Q.length){ $('q').textContent='Anni questions ayipoyayi. Treat eppudu? 🎉'; $('count').textContent='Done'; $('yes').hidden=no.hidden=true; return; }
+  $('count').textContent=`Question ${i+1} of ${Q.length}`; $('q').textContent=Q[i].text; pop.hidden=true;
+  no.style.transform='';
+}
+function dodge(e){ e.preventDefault(); const r=Math.min(innerWidth,500)/2.2;
+  no.style.transform=`translate(${(Math.random()-.5)*2*r}px,${(Math.random()-.5)*160}px)`; }
+no.addEventListener('mouseenter',dodge); no.addEventListener('touchstart',dodge,{passive:false}); no.addEventListener('click',dodge);
+$('yes').onclick=()=>{ pop.textContent=Q[i].popup; pop.hidden=false; pop.classList.remove('bump'); void pop.offsetWidth; pop.classList.add('bump');
+  setTimeout(()=>{i++;show();},2200); };
+$('secret').onclick=()=>{ const t=$('toast'); t.textContent='part ledhu aa akkaaaaa'; t.hidden=false; setTimeout(()=>t.hidden=true,3500); };
+show();
+</script>{% endblock %}
