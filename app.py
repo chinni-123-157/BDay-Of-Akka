@@ -1,331 +1,219 @@
-"""Birthday surprise website – Flask entry point.
-
-The app runs fully without services in local development.  Add Neon, MongoDB and
-SMTP environment variables in Render to turn on event persistence and mail.
-"""
-from __future__ import annotations
-
-import json
-import logging
-import os
-import re
-import smtplib
-from datetime import datetime, timedelta, timezone
+import os, random, smtplib
 from email.message import EmailMessage
 from functools import wraps
-from pathlib import Path
+from dotenv import load_dotenv
+from flask import Flask, render_template, request, redirect, url_for, session, jsonify
+from flask_sqlalchemy import SQLAlchemy
+from werkzeug.security import generate_password_hash, check_password_hash
 
-try:
-    from authlib.integrations.flask_client import OAuth
-except ModuleNotFoundError:  # Keeps password login usable until dependencies are installed.
-    OAuth = None
-from flask import Flask, current_app, jsonify, redirect, render_template, request, session, url_for
+load_dotenv()
+app = Flask(__name__)
+app.secret_key = os.getenv("SECRET_KEY", "dev-secret")
+app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL", "sqlite:///local.db").replace("postgres://", "postgresql://", 1)
+db = SQLAlchemy(app)
 
-BASE_DIR = Path(__file__).resolve().parent
-VIDEO_EXTENSIONS = {".mp4", ".webm", ".ogg", ".mov"}
-RECIPIENTS_FILE = BASE_DIR / "data" / "approved_recipients.json"
-EMAIL_PATTERN = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
-oauth = OAuth() if OAuth is not None else None
+PEOPLE = ["leela", "Chinni", "mahi", "Charan", "Other"]
+EXT = (".mp4", ".webm", ".mov")
 
+# ---------- Neon / Postgres (structured) ----------
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(80), nullable=False)
+    email = db.Column(db.String(160), unique=True, nullable=False)
+    pw_hash = db.Column(db.String(255))  # empty for Google users
 
-def create_app() -> Flask:
-    app = Flask(__name__)
-    app.config.from_mapping(
-        SECRET_KEY=os.getenv("SECRET_KEY", "replace-this-before-production"),
-        DATABASE_URL=os.getenv("DATABASE_URL", ""),
-        MONGODB_URI=os.getenv("MONGODB_URI", ""),
-        MONGODB_DATABASE=os.getenv("MONGODB_DATABASE", "birthday_site"),
-        SMTP_HOST=os.getenv("SMTP_HOST", ""),
-        SMTP_PORT=int(os.getenv("SMTP_PORT", "587")),
-        SMTP_USERNAME=os.getenv("SMTP_USERNAME", ""),
-        SMTP_PASSWORD=os.getenv("SMTP_PASSWORD", ""),
-        SMTP_FROM=os.getenv("SMTP_FROM", ""),
-        SITE_PASSWORD=os.getenv("SITE_PASSWORD", ""),
-        SIGNUP_KEY=os.getenv("SIGNUP_KEY", os.getenv("SITE_PASSWORD", "")),
-        GOOGLE_CLIENT_ID=os.getenv("GOOGLE_CLIENT_ID", ""),
-        GOOGLE_CLIENT_SECRET=os.getenv("GOOGLE_CLIENT_SECRET", ""),
-        PERMANENT_SESSION_LIFETIME=timedelta(hours=12),
-    )
-    if oauth is not None:
-        oauth.init_app(app)
-    if oauth is not None and app.config["GOOGLE_CLIENT_ID"] and app.config["GOOGLE_CLIENT_SECRET"]:
-        oauth.register(
-            name="google",
-            client_id=app.config["GOOGLE_CLIENT_ID"],
-            client_secret=app.config["GOOGLE_CLIENT_SECRET"],
-            server_metadata_url="https://accounts.google.com/.well-known/openid-configuration",
-            client_kwargs={"scope": "openid email profile"},
-        )
+class Question(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    text = db.Column(db.String(300), nullable=False)
+    popup = db.Column(db.String(300), nullable=False)
 
-    @app.get("/")
-    def home():
-        if is_authenticated():
-            return redirect(url_for("celebrate"))
-        return render_template(
-            "login.html",
-            google_enabled=bool(oauth is not None and app.config["GOOGLE_CLIENT_ID"] and app.config["GOOGLE_CLIENT_SECRET"]),
-        )
+SEED_Q = [
+    ("Most beautiful girl is you — Yes or No?", "Correct answer. Nuvvu cheppakapoyina naaku telusu 😌"),
+    ("Cake lo first piece naake ivvali — Yes or No?", "Approved ✅ Knife ikkada ivvu."),
+    ("Nuvvu inka 18 ne ga? Yes or No?", "Aadhaar card chupinchu 🤨 ...fine, 18 ne."),
+    ("Ee roju diet cancel chesesam — Yes or No?", "Birthday calories count avvavu 🍰"),
+    ("Nenu cheppina jokes ki nuvvu navvav — Yes or No?", "Navvakapoyina fine, nenu navvanu le 😂"),
+    ("Treat ivvadam ippudu start chesthava — Yes or No?", "Zomato open chesa already 🛵"),
+    ("Nuvvu ee website ni screenshot teesukuntav — Yes or No?", "Bad girl 📸 Pettuko, free."),
+    ("Mee friends lo nuvve most fun person — Yes or No?", "Chinni, mahi, Charan: 'avunu' 🙌"),
+    ("Birthday roju alarm pettukoru — Yes or No?", "Sleep mode: ON 😴"),
+    ("Nenu ee website ni free ga chesanu, thanks cheppava — Yes or No?", "Thanks accept chesa 🙏 Treat inka due!"),
+    ("Next year kuda ee website kavala — Yes or No?", "Subscription: ₹0, but treat compulsory 😎"),
+    ("Last question: Happy birthday ani cheppina vallaki hug — Yes or No?", "Hug loading... 🤗 Happy Birthday!"),
+]
 
-    @app.post("/login/password")
-    def password_login():
-        submitted_password = str(request.form.get("password", ""))
-        configured_password = app.config["SITE_PASSWORD"]
-        if configured_password and secure_compare(submitted_password, configured_password):
-            create_login("Birthday Guest")
-            return redirect(url_for("celebrate"))
-        return redirect(url_for("error_page", reason="Wrong password ra babu — try once more."))
+def seed():
+    db.create_all()
+    if not Question.query.first():
+        db.session.add_all(Question(text=t, popup=p) for t, p in SEED_Q)
+        db.session.commit()
 
-    @app.get("/signup")
-    def signup():
-        if is_authenticated():
-            return redirect(url_for("celebrate"))
-        return render_template("signup.html")
+with app.app_context():
+    seed()
 
-    @app.post("/signup")
-    def complete_signup():
-        email = str(request.form.get("email", "")).strip().lower()
-        invite_key = str(request.form.get("invite_key", ""))
-        recipient = next((entry for entry in approved_recipients() if entry["email"] == email), None)
-        if recipient and app.config["SIGNUP_KEY"] and secure_compare(invite_key, app.config["SIGNUP_KEY"]):
-            create_login(recipient["name"])
-            persist_event(
-                app,
-                {
-                    "name": recipient["name"],
-                    "action": "signup",
-                    "source": request.remote_addr or "unknown",
-                    "created_at": datetime.now(timezone.utc).isoformat(),
-                },
-            )
-            return redirect(url_for("celebrate"))
-        return redirect(url_for("error_page", reason="Invite email or secret key is not correct. Meme class ki welcome! 🤭"))
+# ---------- MongoDB (unstructured) ----------
+_mongo = None
+def mongo():
+    global _mongo
+    uri = os.getenv("MONGO_URI")
+    if not uri:
+        return None
+    if _mongo is None:
+        from pymongo import MongoClient
+        _mongo = MongoClient(uri, serverSelectionTimeoutMS=3000).get_default_database(default="birthday")
+    return _mongo
 
-    @app.get("/login/google")
-    def google_login():
-        google = oauth.create_client("google") if oauth is not None else None
-        if google is None:
-            return redirect(url_for("error_page", reason="Google sign-in is not configured yet."))
-        return google.authorize_redirect(url_for("google_callback", _external=True))
+def mongo_list(coll, query=None):
+    try:
+        m = mongo()
+        return list(m[coll].find(query or {}, {"_id": 0})) if m is not None else []
+    except Exception as e:
+        app.logger.warning("Mongo unavailable: %s", e)
+        return []
 
-    @app.get("/auth/google/callback")
-    def google_callback():
-        google = oauth.create_client("google") if oauth is not None else None
-        if google is None:
-            return redirect(url_for("error_page", reason="Google sign-in is taking a chai break."))
-        try:
-            token = google.authorize_access_token()
-            user_info = token.get("userinfo") or google.get("userinfo").json()
-            email = str(user_info.get("email", "")).strip().lower()
-        except Exception as exc:
-            app.logger.warning("Google login failed: %s", exc)
-            return redirect(url_for("error_page", reason="Google login did not finish. Try again, babu."))
+def static_files(folder):
+    path = os.path.join(app.static_folder, folder)
+    if not os.path.isdir(path):
+        return []
+    return [f"/static/{folder}/{f}" for f in sorted(os.listdir(path)) if not f.startswith(".")]
 
-        recipient = next((entry for entry in approved_recipients() if entry["email"] == email), None)
-        if recipient is None:
-            return redirect(url_for("error_page", reason="This Gmail is not in the birthday guest list."))
-        create_login(recipient["name"])
-        return redirect(url_for("celebrate"))
+# ---------- Auth ----------
+def login_required(fn):
+    @wraps(fn)
+    def wrap(*a, **k):
+        if "uid" not in session:
+            return redirect(url_for("home"))
+        return fn(*a, **k)
+    return wrap
 
-    @app.get("/logout")
-    def logout():
-        session.clear()
-        return redirect(url_for("home"))
+def start_session(user):
+    session["uid"], session["name"], session["email"] = user.id, user.name, user.email
 
-    @app.get("/celebrate")
-    @login_required
-    def celebrate():
-        return render_template("home.html")
+@app.get("/")
+def home():
+    return render_template("home.html", google=bool(os.getenv("GOOGLE_CLIENT_ID")), tab=request.args.get("tab", "login"))
 
-    @app.get("/error")
-    def error_page():
-        if is_authenticated():
-            return redirect(url_for("celebrate"))
-        return render_template("error.html", reason=request.args.get("reason", "")), 200
+@app.post("/signup")
+def signup():
+    f = request.form
+    name, email, pw = f.get("name", "").strip(), f.get("email", "").strip().lower(), f.get("password", "")
+    if f.get("key", "") != os.getenv("SITE_KEY", "radhakrishna") or not (name and email and pw):
+        return redirect(url_for("oops"))
+    user = User.query.filter_by(email=email).first()
+    if user:
+        return redirect(url_for("oops"))
+    user = User(name=name, email=email, pw_hash=generate_password_hash(pw))
+    db.session.add(user); db.session.commit()
+    start_session(user)
+    return redirect(url_for("wish"))
 
-    @app.get("/wish")
-    @login_required
-    def wish():
-        media_dir = BASE_DIR / "static" / "media"
-        videos = [
-            f"media/{path.name}"
-            for path in sorted(media_dir.iterdir())
-            if path.is_file() and path.suffix.lower() in VIDEO_EXTENSIONS
-        ]
-        return render_template("wish.html", videos=videos, recipients=approved_recipients())
+@app.post("/login")
+def login():
+    email, pw = request.form.get("email", "").strip().lower(), request.form.get("password", "")
+    user = User.query.filter_by(email=email).first()
+    if user and user.pw_hash and check_password_hash(user.pw_hash, pw):
+        start_session(user)
+        return redirect(url_for("wish"))
+    return redirect(url_for("oops"))
 
-    @app.get("/questions")
-    @login_required
-    def questions():
-        return render_template("questions.html")
-
-    @app.get("/mail")
-    @login_required
-    def mail():
-        name = clean_name(request.args.get("name", "Friend"))
-        if name != "Friend" and recipient_by_name(name) is None:
-            name = "Friend"
-        delivery = request.args.get("delivery", "queued")
-        return render_template("mail.html", name=name, delivery=delivery)
-
-    @app.post("/api/send-thanks")
-    @login_required
-    def send_thanks():
-        payload = request.get_json(silent=True) or {}
-        name = clean_name(payload.get("name", ""))
-        action = payload.get("action", "send")
-        recipient = recipient_by_name(name)
-        if recipient is None:
-            return jsonify(ok=False, message="Only an approved recipient from the email list can receive this message."), 400
-        if action not in {"send", "like"}:
-            return jsonify(ok=False, message="That button is having a comedy break."), 400
-
-        event = {
-            "name": recipient["name"],
-            "action": action,
-            "source": request.remote_addr or "unknown",
-            "created_at": datetime.now(timezone.utc).isoformat(),
-        }
-        persistence = persist_event(app, event)
-        delivery = send_thank_you_email(app, recipient)
-        return jsonify(ok=True, name=recipient["name"], delivery=delivery, persistence=persistence)
-
-    @app.errorhandler(404)
-    def not_found(_error):
-        if is_authenticated():
-            return redirect(url_for("celebrate"))
-        return render_template("error.html"), 404
-
-    return app
-
-
-def clean_name(value: object) -> str:
-    return str(value).strip().title()[:40]
-
-
-def is_authenticated() -> bool:
-    return session.get("authenticated") is True
-
-
-def create_login(display_name: str) -> None:
+@app.get("/logout")
+def logout():
     session.clear()
-    session.permanent = True
-    session["authenticated"] = True
-    session["display_name"] = display_name
+    return redirect(url_for("home"))
 
+# Google OAuth (enabled only when env vars are set)
+oauth = None
+if os.getenv("GOOGLE_CLIENT_ID"):
+    from authlib.integrations.flask_client import OAuth
+    oauth = OAuth(app)
+    oauth.register("google", client_id=os.getenv("GOOGLE_CLIENT_ID"), client_secret=os.getenv("GOOGLE_CLIENT_SECRET"),
+                   server_metadata_url="https://accounts.google.com/.well-known/openid-configuration",
+                   client_kwargs={"scope": "openid email profile"})
 
-def secure_compare(first: str, second: str) -> bool:
-    import hmac
+@app.get("/auth/google")
+def google_login():
+    if not oauth:
+        return redirect(url_for("oops"))
+    return oauth.google.authorize_redirect(url_for("google_callback", _external=True))
 
-    return hmac.compare_digest(first.encode("utf-8"), second.encode("utf-8"))
-
-
-def login_required(view):
-    @wraps(view)
-    def wrapped_view(*args, **kwargs):
-        if not is_authenticated():
-            return redirect(url_for("error_page", reason="First login avvu ra babu, then surprise open avuthundi!"))
-        return view(*args, **kwargs)
-
-    return wrapped_view
-
-
-def approved_recipients() -> list[dict[str, str]]:
-    """Return only validated entries from the single editable recipient file."""
+@app.get("/auth/google/callback")
+def google_callback():
     try:
-        raw_entries = json.loads(RECIPIENTS_FILE.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
-        current_app.logger.warning("Approved recipient list could not be read: %s", exc)
-        return []
+        info = oauth.google.authorize_access_token()["userinfo"]
+    except Exception:
+        return redirect(url_for("oops"))
+    email = info["email"].lower()
+    allowed = [e.strip().lower() for e in os.getenv("ALLOWED_EMAILS", "").split(",") if e.strip()]
+    if allowed and email not in allowed:
+        return redirect(url_for("oops"))
+    user = User.query.filter_by(email=email).first()
+    if not user:
+        user = User(name=info.get("given_name") or email.split("@")[0], email=email)
+        db.session.add(user); db.session.commit()
+    start_session(user)
+    return redirect(url_for("wish"))
 
-    if not isinstance(raw_entries, dict):
-        current_app.logger.warning("Approved recipient list must contain a JSON object.")
-        return []
+# ---------- Pages ----------
+@app.get("/oops")
+def oops():
+    return render_template("error.html", memes=mongo_list("memes") or [{"url": u} for u in static_files("memes")])
 
-    recipients: list[dict[str, str]] = []
-    seen_emails: set[str] = set()
-    for entry in raw_entries.get("recipients", []):
-        name = clean_name(entry.get("name", ""))
-        email = str(entry.get("email", "")).strip().lower()
-        if name and EMAIL_PATTERN.fullmatch(email) and email not in seen_emails:
-            recipients.append({"name": name, "email": email})
-            seen_emails.add(email)
-    return recipients
+@app.get("/wish")
+@login_required
+def wish():
+    return render_template("wish.html", people=PEOPLE)
 
+@app.get("/questions")
+@login_required
+def questions():
+    return render_template("questions.html", qs=[{"text": q.text, "popup": q.popup} for q in Question.query.order_by(Question.id)])
 
-def recipient_by_name(name: str) -> dict[str, str] | None:
-    return next((entry for entry in approved_recipients() if entry["name"] == name), None)
+@app.get("/mail")
+@login_required
+def mail():
+    action, person = request.args.get("action", "send"), request.args.get("person", "Other")
+    sent = send_thanks(session["name"], session["email"], action, person)
+    return render_template("mail.html", action=action, sent=sent)
 
-
-def persist_event(app: Flask, event: dict) -> dict[str, str]:
-    """Store the interaction in both configured databases; local mode stays usable."""
-    result = {"neon": "not-configured", "mongo": "not-configured"}
-
-    if app.config["DATABASE_URL"]:
-        try:
-            import psycopg
-
-            with psycopg.connect(app.config["DATABASE_URL"], connect_timeout=5) as conn:
-                with conn.cursor() as cursor:
-                    cursor.execute(
-                        """
-                        CREATE TABLE IF NOT EXISTS birthday_events (
-                            id BIGSERIAL PRIMARY KEY,
-                            name TEXT NOT NULL,
-                            action TEXT NOT NULL,
-                            source TEXT,
-                            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-                        )
-                        """
-                    )
-                    cursor.execute(
-                        "INSERT INTO birthday_events (name, action, source, created_at) VALUES (%s, %s, %s, %s)",
-                        (event["name"], event["action"], event["source"], event["created_at"]),
-                    )
-            result["neon"] = "saved"
-        except Exception as exc:  # Service failures must never break a birthday button.
-            app.logger.warning("Neon event save failed: %s", exc)
-            result["neon"] = "unavailable"
-
-    if app.config["MONGODB_URI"]:
-        try:
-            from pymongo import MongoClient
-
-            with MongoClient(app.config["MONGODB_URI"], serverSelectionTimeoutMS=5000) as client:
-                client[app.config["MONGODB_DATABASE"]]["birthday_events"].insert_one(event)
-            result["mongo"] = "saved"
-        except Exception as exc:
-            app.logger.warning("Mongo event save failed: %s", exc)
-            result["mongo"] = "unavailable"
-    return result
-
-
-def send_thank_you_email(app: Flask, recipient: dict[str, str]) -> str:
-    """Send automatically, but only to an entry in approved_recipients.json."""
-    if not (app.config["SMTP_HOST"] and app.config["SMTP_FROM"]):
-        return "mail-not-configured"
+def send_thanks(name, to, action, person):
+    subject = f"Thank you, {name}! 🎂 ({person}'s video)"
+    body = (f"Hi {name},\n\nThanks for {'liking' if action == 'like' else 'sending love on'} {person}'s birthday video "
+            f"and for being part of today. 💛\n\nWith love,\nThe Birthday Website 🦚")
+    host, user, pw = os.getenv("SMTP_HOST"), os.getenv("SMTP_USER"), os.getenv("SMTP_PASS")
+    if not (host and user and pw):
+        app.logger.info("SMTP not configured. Would send to %s: %s", to, subject)
+        return False
     try:
-        name = recipient["name"]
+        msg = EmailMessage(); msg["Subject"], msg["From"], msg["To"] = subject, user, to; msg.set_content(body)
+        with smtplib.SMTP(host, int(os.getenv("SMTP_PORT", 587))) as s:
+            s.starttls(); s.login(user, pw); s.send_message(msg)
+        return True
+    except Exception as e:
+        app.logger.error("Mail failed: %s", e)
+        return False
 
-        message = EmailMessage()
-        message["Subject"] = f"Thank you, {name}! 🎉"
-        message["From"] = app.config["SMTP_FROM"]
-        message["To"] = recipient["email"]
-        message.set_content(
-            f"Hi {name},\n\nThank you for being part of this birthday surprise! 🎂\n\nWith love and confetti,\nBirthday Crew"
-        )
-        with smtplib.SMTP(app.config["SMTP_HOST"], app.config["SMTP_PORT"], timeout=10) as smtp:
-            smtp.starttls()
-            if app.config["SMTP_USERNAME"]:
-                smtp.login(app.config["SMTP_USERNAME"], app.config["SMTP_PASSWORD"])
-            smtp.send_message(message)
-        return "sent"
-    except Exception as exc:
-        app.logger.warning("Thank-you email failed: %s", exc)
-        return "mail-unavailable"
+# ---------- APIs ----------
+@app.get("/api/videos")
+@login_required
+def api_videos():
+    person = request.args.get("person", "")
+    urls = [v["url"] for v in mongo_list("videos", {"person": person})] or static_files(f"videos/{person.lower()}")
+    return jsonify([u for u in urls if u.lower().endswith(EXT) or u.startswith("http")])
 
+@app.get("/api/wallpapers")
+def api_wallpapers():
+    return jsonify([v["url"] for v in mongo_list("wallpapers")] or static_files("wallpapers"))
 
-app = create_app()
+DEFAULT_REPLIES = [
+    "ఎందుకు రా చదువు కున్నావ్ నా బాబు అంతా అంతా పాఠి చదివేస్తే ఎవరు నువ్వు నేర్చుకుంటందీ…",
+    "ఒక పని చెయ్యి ఇక్కడ నువ్వు.",
+    "Ame Ra bala raju emina pani chesuko ra 😭",
+    "Password gurthu pettukoleva? Birthday gurthu pettukunnav kada 🤦",
+]
+@app.post("/api/chat")
+def api_chat():
+    replies = [r["text"] for r in mongo_list("chat_responses")] or DEFAULT_REPLIES
+    return jsonify({"reply": random.choice(replies)})
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
-    app.run(debug=True, host="0.0.0.0", port=int(os.getenv("PORT", "5000")))
+    app.run(debug=True)
