@@ -1,27 +1,32 @@
-{% extends 'base.html' %}
-{% block title %}A Divine Birthday Surprise{% endblock %}
-{% block page %}home{% endblock %}
+{% extends "base.html" %}
 {% block content %}
-<section class="hero glass-panel reveal">
-  <div class="hero-copy">
-    <p class="eyebrow">✨ A little Vrindavan magic for your special day</p>
-    <h1>Happy Birthday,<br><em>beautiful soul!</em></h1>
-    <p class="hero-text">A tiny universe of wishes, giggles, and surprises is waiting for you. Press the peacock feather when you are ready.</p>
-    <div class="hero-actions">
-      <a class="button primary" href="{{ url_for('wish') }}">Open birthday wishes <span>→</span></a>
-      <a class="button ghost" href="{{ url_for('questions') }}">Play the question game</a>
-    </div>
+<section class="glass card hero">
+  <p class="flute">🦚</p>
+  <h1>Happy Birthday!</h1>
+  <p class="sub">Radha Krishna bless this day. Sign in to open your surprise.</p>
+  <div class="tabs">
+    <button class="tab {{ 'on' if tab=='login' }}" data-t="login">Log in</button>
+    <button class="tab {{ 'on' if tab=='signup' }}" data-t="signup">Sign up</button>
   </div>
-  <div class="hero-art" aria-label="Decorative birthday cake illustration">
-    <div class="moon">☾</div>
-    <div class="flute">━━━━━━━━</div>
-    <div class="cake"><i>✦</i><b></b><span></span><strong>🎂</strong></div>
-    <p>Made with lots of love<br>and slightly too much confetti.</p>
-  </div>
-</section>
-<section class="path-grid reveal">
-  <a class="path-card" href="{{ url_for('wish') }}"><span class="path-icon">🎞️</span><h2>Watch the wishes</h2><p>A beautiful birthday-video playlist.</p></a>
-  <a class="path-card" href="{{ url_for('questions') }}"><span class="path-icon">😄</span><h2>Answer some drama</h2><p>A very serious question game. Totally.</p></a>
-  <a class="path-card" href="{{ url_for('error_page') }}"><span class="path-icon">🤭</span><h2>Visit Meme Zone</h2><p>Telugu-flavoured comedy, on demand.</p></a>
+  <form id="login" class="pane {{ 'on' if tab=='login' }}" method="post" action="{{ url_for('login') }}">
+    <input name="email" type="email" placeholder="Email" required>
+    <input name="password" type="password" placeholder="Password" required>
+    <button class="btn">Log in</button>
+  </form>
+  <form id="signup" class="pane {{ 'on' if tab=='signup' }}" method="post" action="{{ url_for('signup') }}">
+    <input name="name" placeholder="Your name" required>
+    <input name="email" type="email" placeholder="Email" required>
+    <input name="password" type="password" placeholder="Choose a password" required>
+    <input name="key" type="password" placeholder="Secret key (ask the birthday host)" required>
+    <button class="btn">Create account</button>
+  </form>
+  {% if google %}<a class="btn ghost" href="{{ url_for('google_login') }}"><b class="g">G</b> Continue with Google</a>{% endif %}
 </section>
 {% endblock %}
+{% block scripts %}<script>
+document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('.tab,.pane').forEach(e=>e.classList.remove('on'));
+  b.classList.add('on'); document.getElementById(b.dataset.t).classList.add('on');
+});
+</script>{% endblock %}
+
