@@ -1,39 +1,77 @@
 {% extends "base.html" %}
-{% block title %}Birthday wishes{% endblock %}
+{% block title %}Birthday reels{% endblock %}
+{% block body_class %}reelpage{% endblock %}
 {% block content %}
-<section class="stage">
-  <div class="people left">{% for p in people[:2] %}<button class="person" data-p="{{ p }}">{{ p }}</button>{% endfor %}</div>
-  <div class="phone glass">
-    <video id="vid" playsinline controls></video>
-    <p id="empty" class="sub" hidden>No videos here yet. Add files to <code>static/videos/&lt;name&gt;/</code></p>
-    <div class="rail">
-      <a id="like" class="icon" title="Like" href="#">♥</a>
-      <a id="send" class="icon" title="Send" href="#">➤</a>
-    </div>
-    <p id="now" class="sub"></p>
+<section class="phone glass reels">
+  <div class="stories">
+    <button class="story on" data-p=""><span>★</span><small>All</small></button>
+    {% for p in people %}<button class="story" data-p="{{ p }}"><span>{{ p[:1]|upper }}</span><small>{{ p }}</small></button>{% endfor %}
+    <button class="story mute" id="mute" aria-label="Sound"><span>🔇</span><small>Sound</small></button>
   </div>
-  <div class="people right">{% for p in people[2:] %}<button class="person" data-p="{{ p }}">{{ p }}</button>{% endfor %}</div>
+  <div class="feed" id="feed"></div>
+  <p id="empty" class="sub empty" hidden>No videos yet. Add files to <code>static/videos/&lt;name&gt;/</code></p>
 </section>
+{% if is_bgirl %}
+<div class="sheet" id="sheet" hidden>
+  <div class="sheet-card glass">
+    <h2>Send a thank-you 💌</h2>
+    <select id="to" aria-label="Recipient"></select>
+    <textarea id="txt" maxlength="500" rows="5"></textarea>
+    <p id="smsg" class="small" role="status"></p>
+    <button class="btn" id="go">Send</button><button class="btn ghost" id="cancel">Cancel</button>
+  </div>
+</div>
+{% endif %}
 {% endblock %}
 {% block scripts %}<script>
-const vid=document.getElementById('vid'), now=document.getElementById('now'), empty=document.getElementById('empty');
-let list=[], idx=0, person='';
-function play(i){
-  vid.classList.add('fade');
-  setTimeout(()=>{ idx=i%list.length; vid.src=list[idx]; vid.play().catch(()=>{}); vid.classList.remove('fade');
-    now.textContent=`${person} · ${idx+1} of ${list.length}`; },350);
+const IS_BGIRL={{ is_bgirl|tojson }}, R={{ recipients|tojson }};
+const feed=document.getElementById('feed'), empty=document.getElementById('empty'), enc=encodeURIComponent;
+let muted=true, cur=null, dirty=false;
+const note=(who,person)=>`హాయ్ ${who},\n\nనీ బర్త్‌డే విషెస్ వీడియో చూశాను, చాలా చాలా నచ్చింది! నా రోజుని స్పెషల్ చేసినందుకు థాంక్యూ సో మచ్ 🥰\n\nHi ${who}, I loved your birthday wish video. Thank you for making my day special!\n\nట్రీట్ నా తరఫున డ్యూ 😄`;
+function openSheet(it){
+  if(!IS_BGIRL) return; cur=it; dirty=false;
+  const to=document.getElementById('to'), txt=document.getElementById('txt'); to.innerHTML='';
+  R.forEach(r=>to.add(new Option(`${r.name} (${r.left} left)`,r.id)));
+  const guess=R.find(r=>r.name.toLowerCase().includes(it.person.toLowerCase())); if(guess) to.value=guess.id;
+  const fillNote=()=>{ if(!dirty){ const r=R.find(x=>x.id==to.value); txt.value=note(r?r.name:it.person); } };
+  to.onchange=fillNote; txt.oninput=()=>dirty=true; fillNote();
+  document.getElementById('smsg').textContent=''; document.getElementById('sheet').hidden=false;
 }
-vid.addEventListener('ended',()=>play(idx+1));
+if(IS_BGIRL){
+  document.getElementById('cancel').onclick=()=>document.getElementById('sheet').hidden=true;
+  document.getElementById('go').onclick=async()=>{ const to=document.getElementById('to'), m=document.getElementById('smsg'); m.textContent='Sending…';
+    const r=await sendMsg(to.value,document.getElementById('txt').value);
+    if(r.ok){ R.find(x=>x.id==to.value).left=r.left; document.getElementById('sheet').hidden=true; } else m.textContent=r.error; };
+}
+function build(items){
+  feed.innerHTML=''; empty.hidden=items.length>0;
+  items.forEach((it,i)=>{
+    const d=document.createElement('article'); d.className='reel';
+    d.innerHTML=`<video playsinline preload="metadata"></video><div class="shade"></div><div class="heart-pop">♥</div>
+      <div class="rail"><button class="act like" aria-label="Like">♥</button><button class="act send" aria-label="Send">➤</button></div>
+      <div class="cap"><b></b><span></span></div>`;
+    const v=d.querySelector('video'); v.src=it.url; v.muted=muted;
+    d.querySelector('.cap b').textContent='@'+it.person; d.querySelector('.cap span').textContent=`Birthday wish ${i+1} of ${items.length}`;
+    v.addEventListener('ended',()=>(d.nextElementSibling||feed.firstElementChild).scrollIntoView({behavior:'smooth'}));
+    v.addEventListener('click',()=>v.paused?v.play():v.pause());
+    const like=d.querySelector('.like'), pop=d.querySelector('.heart-pop');
+    like.onclick=()=>{ like.classList.toggle('on'); pop.classList.remove('go'); void pop.offsetWidth; pop.classList.add('go'); if(like.classList.contains('on')) openSheet(it); };
+    v.addEventListener('dblclick',()=>{ if(!like.classList.contains('on')) like.click(); });
+    d.querySelector('.send').onclick=async()=>{
+      if(IS_BGIRL) return openSheet(it);
+      try{ if(navigator.share) await navigator.share({title:'Birthday wish',url:location.origin}); else {await navigator.clipboard.writeText(location.origin); alert('Link copied!');} }catch{}
+    };
+    feed.appendChild(d); io.observe(d);
+  });
+}
+const io=new IntersectionObserver(es=>es.forEach(e=>{ const v=e.target.querySelector('video');
+  if(e.isIntersecting){ v.muted=muted; v.currentTime=0; v.play().catch(()=>{}); } else v.pause(); }),{root:feed,threshold:.7});
 async function pick(p){
-  person=p; document.querySelectorAll('.person').forEach(b=>b.classList.toggle('on',b.dataset.p===p));
-  list=await (await fetch('/api/videos?person='+encodeURIComponent(p))).json();
-  empty.hidden=list.length>0; vid.hidden=!list.length; now.textContent='';
-  if(list.length) play(0); else vid.removeAttribute('src');
+  document.querySelectorAll('.story:not(.mute)').forEach(b=>b.classList.toggle('on',b.dataset.p===p));
+  build(await (await fetch('/api/videos?person='+enc(p))).json());
 }
-document.querySelectorAll('.person').forEach(b=>b.onclick=()=>pick(b.dataset.p));
-['like','send'].forEach(a=>document.getElementById(a).onclick=e=>{
-  e.preventDefault(); document.body.classList.add('leaving');
-  setTimeout(()=>location.href=`/mail?action=${a}&person=${encodeURIComponent(person||'Other')}`,350);
-});
-pick('{{ people[0] }}');
+document.querySelectorAll('.story:not(.mute)').forEach(b=>b.onclick=()=>pick(b.dataset.p));
+document.getElementById('mute').onclick=e=>{ muted=!muted; e.currentTarget.querySelector('span').textContent=muted?'🔇':'🔊';
+  document.querySelectorAll('.reel video').forEach(v=>v.muted=muted); };
+pick('');
 </script>{% endblock %}
