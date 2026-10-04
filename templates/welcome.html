@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Happy Birthday {{ bday }}{% endblock %}
+{% block body_class %}welcomepage{% endblock %}
+{% block content %}
+<section class="welcome">
+  <p class="eyebrow" id="greet" data-g='{{ greetings|tojson }}'>Happy Birthday</p>
+  <h1 class="big">{% if is_me %}Happy Birthday<br><span class="grad">{{ bday }}</span> 🎂{% else %}Today is<br><span class="grad">{{ bday }}</span>'s birthday 🎉{% endif %}</h1>
+  <p class="lead">{% if is_me %}ఈ రోజు నీదే — మేమంతా నీ కోసం ఇక్కడున్నాం 💛{% else %}అందరం కలిసి గ్రాండ్‌గా విష్ చేద్దాం! 🥳{% endif %}</p>
+  <div class="photos" id="photos" aria-label="Birthday photos"></div>
+  <div class="wishgrid">{% for w in wishes %}<div class="glass wishcard" style="animation-delay:{{ loop.index0 * 0.12 }}s">{{ w }}</div>{% endfor %}</div>
+  <a class="btn cta" href="{{ url_for('wish') }}">Watch the video wishes ▶</a>
+</section>
+{% endblock %}
+{% block scripts %}<script>
+const g=JSON.parse(document.getElementById('greet').dataset.g); let k=0; const el=document.getElementById('greet');
+setInterval(()=>{ el.classList.add('out'); setTimeout(()=>{ el.textContent=g[++k%g.length]; el.classList.remove('out'); },300); },2500);
+fetch('/api/wallpapers').then(r=>r.json()).then(u=>{ const p=document.getElementById('photos');
+  u.filter(x=>x.startsWith('/media/')).slice(0,12).forEach(src=>{ const i=new Image(); i.src=src; i.loading='lazy'; i.alt='Birthday photo'; p.append(i); });
+  if(!p.children.length) p.remove(); });
+</script>{% endblock %}
