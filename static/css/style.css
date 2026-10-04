@@ -76,3 +76,112 @@ body.meme .page{display:block;padding-top:1rem}
 .again{text-align:center}
 @media (max-width:760px){.people{flex-direction:row;flex-wrap:wrap;justify-content:center}.stage{flex-direction:column}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition-duration:.01s!important}}
+
+.notice{background:rgba(242,169,59,.25);border:1px solid var(--gold);padding:.6rem .9rem;border-radius:14px;margin:.8rem 0 0}
+.small{font-size:.85rem}
+.card.admin{width:min(94vw,720px);text-align:left}
+.row{display:flex;align-items:center;gap:.8rem;padding:.7rem 0;border-top:1px solid var(--edge);flex-wrap:wrap}
+.row .info{flex:1;min-width:140px}
+.avatar{width:40px;height:40px;border-radius:50%;background:var(--teal);display:grid;place-items:center;font-weight:800;object-fit:cover}
+.pill{padding:.2rem .7rem;border-radius:999px;font-size:.8rem;font-weight:800;background:rgba(255,255,255,.2)}
+.pill.approved{background:#2e9e6b}.pill.pending{background:var(--gold);color:#2a0f2a}.pill.rejected{background:#c0485a}
+.row form{margin:0}.mini{border:0;border-radius:12px;padding:.5rem .9rem;font:800 .85rem Nunito;cursor:pointer;color:#fff}
+.mini.ok{background:#2e9e6b}.mini.no{background:#c0485a}
+/* college id boxes */
+.lbl{display:block;text-align:left;font-size:.85rem;opacity:.85;margin:.6rem 0 .2rem}
+.ids{display:grid;grid-template-columns:repeat(10,1fr);gap:4px;margin-bottom:.4rem}
+.idb{padding:.6rem 0;text-align:center;font-weight:800;text-transform:uppercase;margin:0;border-radius:10px;min-width:0}
+.ids.shake{animation:shake .4s}@keyframes shake{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+/* birthday banner + confetti */
+.bday{position:fixed;top:calc(env(safe-area-inset-top) + 70px);left:50%;transform:translateX(-50%);width:min(94vw,640px);z-index:4;
+ padding:.55rem 1rem;border-radius:999px;display:flex;gap:.7rem;align-items:center;font-size:.95rem}
+body:not(:has(.nav)) .bday{top:calc(env(safe-area-inset-top) + 12px)}
+.bday b{white-space:nowrap;color:var(--gold)}.bday span{opacity:0;transition:opacity .25s;min-width:0}.bday span.in{opacity:1}
+.has-bday .page{padding-top:8.5rem}
+.confetti{position:fixed;inset:0;pointer-events:none;z-index:3;overflow:hidden}
+.confetti span{position:absolute;top:-2rem;font-size:1.4rem;animation:fall linear infinite}
+@keyframes fall{to{transform:translateY(110vh) rotate(360deg)}}
+/* admin switches */
+.switches{flex-basis:100%;display:flex;gap:1.2rem;flex-wrap:wrap;padding-left:52px}
+.switches form{display:flex;align-items:center;gap:.5rem;font-size:.85rem}
+.switch{width:46px;height:26px;border-radius:999px;border:0;background:rgba(255,255,255,.25);position:relative;cursor:pointer;transition:background .25s}
+.switch i{position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform .25s var(--ease)}
+.switch.on{background:#2e9e6b}.switch.on i{transform:translateX(20px)}
+.switch:focus-visible{outline:3px solid var(--cream);outline-offset:2px}
+/* instagram-reels style player */
+body.reelpage .page{padding:5rem 0 .6rem}
+.reels{width:min(100vw,400px);height:calc(100dvh - 5.8rem);max-height:820px;padding:0;overflow:hidden;position:relative;border-radius:34px}
+.has-bday.reelpage .page{padding-top:8.5rem}.has-bday .reels{height:calc(100dvh - 9rem)}
+.feed{height:100%;overflow-y:scroll;scroll-snap-type:y mandatory;scrollbar-width:none;overscroll-behavior:contain}
+.feed::-webkit-scrollbar{display:none}
+.reel{height:100%;scroll-snap-align:start;scroll-snap-stop:always;position:relative;background:#000}
+.reel video{width:100%;height:100%;object-fit:cover;display:block}
+.shade{position:absolute;inset:0;pointer-events:none;background:linear-gradient(to bottom,rgba(0,0,0,.45),transparent 22%,transparent 60%,rgba(0,0,0,.65))}
+.reel .rail{position:absolute;right:12px;bottom:110px;display:flex;flex-direction:column;gap:1rem;z-index:2}
+.act{width:48px;height:48px;border-radius:50%;border:0;background:rgba(0,0,0,.4);color:#fff;font-size:1.4rem;cursor:pointer;backdrop-filter:blur(8px);transition:transform .2s var(--ease),color .2s}
+.act:hover{transform:scale(1.12)}.act.like.on{color:#ff3b6b}.act:focus-visible{outline:3px solid #fff}
+.cap{position:absolute;left:14px;right:80px;bottom:28px;display:flex;flex-direction:column;gap:.2rem;z-index:2;text-shadow:0 1px 6px #000}
+.heart-pop{position:absolute;inset:0;display:grid;place-items:center;font-size:6rem;color:#ff3b6b;opacity:0;pointer-events:none}
+.heart-pop.go{animation:pop .7s var(--ease)}@keyframes pop{30%{opacity:1;transform:scale(1.2)}100%{opacity:0;transform:scale(1.6)}}
+.stories{position:absolute;top:10px;left:0;right:0;z-index:4;display:flex;gap:.7rem;overflow-x:auto;padding:0 14px;scrollbar-width:none}
+.story{flex:none;background:none;border:0;color:#fff;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;font:600 .7rem Nunito;text-shadow:0 1px 4px #000}
+.story span{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;font-weight:800;background:rgba(0,0,0,.45);border:2px solid transparent;
+ background-clip:padding-box;box-shadow:0 0 0 2px rgba(255,255,255,.35)}
+.story.on span{box-shadow:0 0 0 3px var(--rose),0 0 0 5px var(--gold)}
+.empty{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:2rem;margin:0}
+@media (prefers-reduced-motion:reduce){.feed{scroll-behavior:auto}}
+
+/* ===== iPhone glass finish (overrides above) ===== */
+:root{--ease:cubic-bezier(.32,.72,0,1);--spring:cubic-bezier(.34,1.56,.64,1)}
+body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Inter","Noto Sans Telugu",system-ui,sans-serif;letter-spacing:-.011em;-webkit-font-smoothing:antialiased}
+h1,h2,.chat h1{font-family:inherit}h1,h2{font-weight:700;letter-spacing:-.03em}
+.glass{background:linear-gradient(180deg,rgba(255,255,255,.24),rgba(255,255,255,.09));border:1px solid rgba(255,255,255,.3);
+ backdrop-filter:blur(30px) saturate(1.9);-webkit-backdrop-filter:blur(30px) saturate(1.9);border-radius:32px;
+ box-shadow:0 30px 80px rgba(0,0,0,.38),inset 0 1.5px 0 rgba(255,255,255,.5),inset 0 -1px 0 rgba(255,255,255,.1)}
+.card{animation:rise .7s var(--ease) both}@keyframes rise{from{opacity:0;transform:translateY(24px) scale(.97)}}
+.veil{background:linear-gradient(180deg,rgba(8,8,30,.25),rgba(8,8,30,.5))}
+.wall{transition:opacity 3s ease-in-out;transform:scale(1.05);animation:kb 24s ease-in-out infinite alternate}
+@keyframes kb{to{transform:scale(1.14) translate(-1.5%,-1%)}}
+.nav{border-radius:22px;overflow-x:auto;scrollbar-width:none;white-space:nowrap;padding:.65rem 1rem}
+.nav a{padding:.25rem .5rem;border-radius:10px;transition:background .2s}.nav a:hover{background:rgba(255,255,255,.18)}
+.badge{font-style:normal;background:#ff3b6b;color:#fff;border-radius:999px;font-size:.7rem;padding:.05rem .45rem;margin-left:.3rem;font-weight:800}
+@media (max-width:640px){.who{display:none}}
+.btn{border-radius:16px;box-shadow:0 6px 18px rgba(232,116,154,.3),inset 0 1px 0 rgba(255,255,255,.5)}
+.btn:active,.person:active,.act:active{transform:scale(.96)}
+.btn.ghost{background:rgba(255,255,255,.12);box-shadow:inset 0 1px 0 rgba(255,255,255,.3);backdrop-filter:blur(10px)}
+input,select,textarea{width:100%;padding:.9rem 1.1rem;margin:.35rem 0;border-radius:16px;border:1px solid rgba(255,255,255,.3);
+ background:rgba(255,255,255,.14);color:var(--cream);font:inherit;outline:none;backdrop-filter:blur(8px)}
+select option{color:#222}textarea{resize:vertical}
+input:focus-visible,select:focus-visible,textarea:focus-visible{border-color:var(--gold);box-shadow:0 0 0 3px rgba(242,169,59,.3)}
+.tabs{border-radius:14px;background:rgba(0,0,0,.25)}.tab{border-radius:11px;transition:all .3s var(--ease)}
+.tab.on{background:rgba(255,255,255,.28);box-shadow:0 2px 8px rgba(0,0,0,.25)}
+.adminlink{display:block;margin:.8rem 0 .2rem;color:var(--cream);opacity:.7;font-size:.85rem}
+/* welcome page */
+body.welcomepage .bday{display:none}body.welcomepage .page{padding-top:5.5rem;align-items:start}
+.welcome{width:min(94vw,820px);text-align:center;padding-bottom:3rem}
+.eyebrow{font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);transition:opacity .3s,transform .3s;min-height:1.5em;margin:.5rem 0}
+.eyebrow.out{opacity:0;transform:translateY(-8px)}
+.big{font-size:clamp(2.4rem,9vw,4.6rem);line-height:1.05;margin:.2em 0}
+.grad{background:linear-gradient(120deg,#ffd27a,#e8749a 55%,#9ad6ff);-webkit-background-clip:text;background-clip:text;color:transparent}
+.lead{font-size:1.15rem;opacity:.95}
+.photos{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;padding:1rem .2rem;margin:1rem 0;scrollbar-width:none}
+.photos img{height:230px;width:auto;border-radius:24px;scroll-snap-align:center;box-shadow:0 14px 40px rgba(0,0,0,.4);border:2px solid rgba(255,255,255,.35);animation:rise .8s var(--ease) both}
+.wishgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin:1rem 0 1.6rem;text-align:left}
+.wishcard{padding:1rem 1.2rem;border-radius:22px;animation:rise .7s var(--spring) both;line-height:1.5}
+.cta{width:auto;padding:1rem 2rem;font-size:1.05rem}
+/* messages + sheet */
+.card.msgs{width:min(94vw,560px);text-align:left}
+.compose{margin-bottom:1.2rem;padding-bottom:1rem;border-bottom:1px solid var(--edge)}
+.bubble{background:rgba(255,255,255,.18);border:1px solid var(--edge);border-radius:22px 22px 22px 6px;padding:.8rem 1.1rem;margin:.6rem 0;animation:rise .5s var(--ease) both}
+.bubble p{margin:.2rem 0;white-space:pre-wrap;line-height:1.5}.bubble small{opacity:.7}
+.sheet{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:20;display:flex;align-items:flex-end;justify-content:center;animation:fade .25s}
+.sheet[hidden]{display:none}@keyframes fade{from{opacity:0}}
+.sheet-card{width:min(100vw,520px);padding:1.4rem 1.4rem calc(1.4rem + env(safe-area-inset-bottom));border-radius:32px 32px 0 0;animation:up .45s var(--ease)}
+@keyframes up{from{transform:translateY(100%)}}
+.sheet-card .btn{margin-top:.5rem}
+/* admin wallpapers */
+.walls{padding-bottom:1rem}.upload{display:flex;gap:.6rem;align-items:center}.upload .btn{width:auto;margin:0}
+.wallgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px;margin-top:.8rem}
+.wallgrid form{position:relative;margin:0}.wallgrid img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:16px;display:block}
+.wallgrid .mini{position:absolute;top:4px;right:4px;border-radius:50%;width:26px;height:26px;padding:0}
+.card.admin h2{font-size:1.2rem;margin:1rem 0 .3rem}
