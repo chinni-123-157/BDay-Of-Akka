@@ -1,18 +1,24 @@
-{% extends 'base.html' %}
-{% block title %}Ayyo! Meme Zone{% endblock %}
-{% block page %}error{% endblock %}
+{% extends "base.html" %}
+{% block title %}Oops!{% endblock %}
+{% block body_class %}meme{% endblock %}
 {% block content %}
-<section class="meme-page reveal">
-  <div class="section-heading"><p class="eyebrow">404? No worries ra babu</p><h1>Ayyo… this page went for biryani.</h1><p>While it comes back, enjoy some original Telugu-style meme energy. 😌</p></div>
-  <div class="meme-strip" aria-label="Funny Telugu-style meme cards">
-    <article class="meme-card mango"><div class="meme-face">😲</div><p>"Exam tomorrow?"</p><h2>నా brain: tomorrow is a future problem.</h2></article>
-    <article class="meme-card pink"><div class="meme-face">🫠</div><p>"Just one reel…"</p><h2>3 hours later: ఇంకోటి చూస్తే ఏం అవుతుంది.</h2></article>
-    <article class="meme-card teal"><div class="meme-face">🕺</div><p>"Birthday cake?"</p><h2>నా inner dancer has entered the chat.</h2></article>
-  </div>
-  <section class="chatbot glass-panel" aria-labelledby="bot-heading">
-    <div class="bot-avatar">🤖</div><div><p class="eyebrow">Meme support, 24/7*</p><h2 id="bot-heading">Chat with Bujji Bot</h2><p class="bot-subtitle">*Except when it is watching comedy scenes.</p></div>
-    <div class="chat-window" id="chatWindow" aria-live="polite"><div class="chat-message bot">ఎందుకు రా చదువు కున్నావ్ నా బాబు అంతా అంతా పాఠి చదివేస్తే ఎవరు నువ్వు నేర్చుకుంటందీ… 😂</div></div>
-    <form class="chat-form" id="chatForm"><input id="chatInput" maxlength="120" placeholder="Type your comedy problem..." aria-label="Message Bujji Bot"><button class="button primary" type="submit">Send ✦</button></form>
-  </section>
+<section class="memes">
+  {% for m in memes %}<img src="{{ m.url }}" alt="meme" loading="lazy">{% else %}
+  <div class="meme-ph">🤡<br>Add memes to <code>static/memes/</code></div>{% endfor %}
+</section>
+<section class="card chat">
+  <h1>Ame Ra bala raju emina pani ina chesuko ra</h1>
+  <div id="log"><p class="bot">Wrong key or password. Em chestham ra... 🤷</p></div>
+  <form id="f"><input id="m" placeholder="Bot tho matladu..." autocomplete="off"><button class="btn">Send</button></form>
+  <a class="btn again" href="{{ url_for('home') }}">Try again</a>
 </section>
 {% endblock %}
+{% block scripts %}<script>
+const log=document.getElementById('log');
+document.getElementById('f').onsubmit=async e=>{
+  e.preventDefault(); const i=document.getElementById('m'); if(!i.value.trim())return;
+  log.insertAdjacentHTML('beforeend',`<p class="me"></p>`); log.lastChild.textContent=i.value; i.value='';
+  const r=await (await fetch('/api/chat',{method:'POST'})).json();
+  log.insertAdjacentHTML('beforeend',`<p class="bot"></p>`); log.lastChild.textContent=r.reply; log.scrollTop=log.scrollHeight;
+};
+</script>{% endblock %}
