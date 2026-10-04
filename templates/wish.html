@@ -1,27 +1,39 @@
-{% extends 'base.html' %}
-{% block title %}Birthday Wishes{% endblock %}
-{% block page %}wish{% endblock %}
+{% extends "base.html" %}
+{% block title %}Birthday wishes{% endblock %}
 {% block content %}
-<section class="wish-layout reveal">
-  <div class="section-heading compact"><p class="eyebrow">Press play, feel loved</p><h1>Birthday wish cinema ✨</h1></div>
-  <aside class="people left">
-    {% for recipient in recipients[:1] %}
-    <button class="person selected" data-person="{{ recipient.name }}">{{ recipient.name }}</button>
-    {% endfor %}
-  </aside>
-  <section class="video-stage glass-panel" aria-label="Birthday video playlist">
-    {% if videos %}
-      <div class="video-frame"><video id="birthdayVideo" controls playsinline preload="metadata" data-playlist='{{ videos|tojson }}'><source src="{{ url_for('static', filename=videos[0]) }}"></video><div class="video-fade" aria-hidden="true"></div></div>
-      <div class="playlist-status"><span class="pulse-dot"></span><span id="videoStatus">Wish 1 of {{ videos|length }}</span><button class="sound-button" id="unmuteButton" type="button">🔊 Sound on</button></div>
-    {% else %}
-      <div class="video-empty"><span>🎬</span><h2>Your birthday cinema is ready</h2><p>Add .mp4 or .webm videos to <code>static/media</code>, refresh, and they will play here automatically.</p></div>
-    {% endif %}
-    <div class="wish-actions"><button class="button heart-action" data-action="like">♡ <span>Like</span></button><button class="button primary send-action" data-action="send">Send thank you <span>✈</span></button></div>
-  </section>
-  <aside class="people right">
-    {% for recipient in recipients[1:] %}
-    <button class="person" data-person="{{ recipient.name }}">{{ recipient.name }}</button>
-    {% endfor %}
-  </aside>
+<section class="stage">
+  <div class="people left">{% for p in people[:2] %}<button class="person" data-p="{{ p }}">{{ p }}</button>{% endfor %}</div>
+  <div class="phone glass">
+    <video id="vid" playsinline controls></video>
+    <p id="empty" class="sub" hidden>No videos here yet. Add files to <code>static/videos/&lt;name&gt;/</code></p>
+    <div class="rail">
+      <a id="like" class="icon" title="Like" href="#">♥</a>
+      <a id="send" class="icon" title="Send" href="#">➤</a>
+    </div>
+    <p id="now" class="sub"></p>
+  </div>
+  <div class="people right">{% for p in people[2:] %}<button class="person" data-p="{{ p }}">{{ p }}</button>{% endfor %}</div>
 </section>
 {% endblock %}
+{% block scripts %}<script>
+const vid=document.getElementById('vid'), now=document.getElementById('now'), empty=document.getElementById('empty');
+let list=[], idx=0, person='';
+function play(i){
+  vid.classList.add('fade');
+  setTimeout(()=>{ idx=i%list.length; vid.src=list[idx]; vid.play().catch(()=>{}); vid.classList.remove('fade');
+    now.textContent=`${person} · ${idx+1} of ${list.length}`; },350);
+}
+vid.addEventListener('ended',()=>play(idx+1));
+async function pick(p){
+  person=p; document.querySelectorAll('.person').forEach(b=>b.classList.toggle('on',b.dataset.p===p));
+  list=await (await fetch('/api/videos?person='+encodeURIComponent(p))).json();
+  empty.hidden=list.length>0; vid.hidden=!list.length; now.textContent='';
+  if(list.length) play(0); else vid.removeAttribute('src');
+}
+document.querySelectorAll('.person').forEach(b=>b.onclick=()=>pick(b.dataset.p));
+['like','send'].forEach(a=>document.getElementById(a).onclick=e=>{
+  e.preventDefault(); document.body.classList.add('leaving');
+  setTimeout(()=>location.href=`/mail?action=${a}&person=${encodeURIComponent(person||'Other')}`,350);
+});
+pick('{{ people[0] }}');
+</script>{% endblock %}
