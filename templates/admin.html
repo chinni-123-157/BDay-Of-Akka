@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Admin{% endblock %}
+{% block content %}
+<section class="glass card admin">
+  <h1>Admin</h1>
+  <p class="sub small">Accept people so they can see the pages. Then use the switches: <b>Birthday girl</b> makes her Like/Send buttons open a Gmail thank-you; <b>Today's birthday</b> puts her name and wishes across the whole site.</p>
+  {% if msg %}<p class="notice">{{ msg }}</p>{% endif %}
+  <div class="walls">
+    <h2>Birthday wallpapers</h2>
+    <p class="sub small">Images you upload rotate randomly as the background for every user, and appear on the birthday welcome page. {% if not mongo_ok %}<b>Connect MongoDB (MONGO_URI) to enable uploads.</b>{% endif %}</p>
+    <form method="post" action="{{ url_for('upload_wallpapers') }}" enctype="multipart/form-data" class="upload">
+      <input type="file" name="images" accept="image/*" multiple required>
+      <button class="btn">Upload</button>
+    </form>
+    <div class="wallgrid">{% for w in walls %}
+      <form method="post" action="{{ url_for('delete_wallpaper', wid=w) }}"><img src="/media/wp/{{ w }}" alt="wallpaper" loading="lazy"><button class="mini no" aria-label="Delete wallpaper">✕</button></form>
+    {% endfor %}</div>
+  </div>
+  <h2>Access requests</h2>
+  {% for u in users %}
+  <div class="row">
+    {% if u.picture %}<img class="avatar" src="{{ u.picture }}" alt="" referrerpolicy="no-referrer">{% else %}<span class="avatar">{{ u.name[:1] }}</span>{% endif %}
+    <div class="info"><b>{{ u.name }}</b>{% if u.is_admin %} <small>(admin)</small>{% endif %}<br><small>{{ u.email }}{% if u.college_id %} · {{ u.college_id }}{% endif %}</small></div>
+    <span class="pill {{ u.status }}">{{ u.status }}</span>
+    {% if u.id != me %}
+    <form method="post" action="{{ url_for('admin_action', uid=u.id, action='approve') }}">{% if u.status != 'approved' %}<button class="mini ok">Accept</button>{% endif %}</form>
+    <form method="post" action="{{ url_for('admin_action', uid=u.id, action='reject') }}">{% if u.status != 'rejected' %}<button class="mini no">{{ 'Revoke' if u.status == 'approved' else 'Reject' }}</button>{% endif %}</form>
+    {% endif %}
+    {% if u.status == 'approved' %}
+    <div class="switches">
+      <form method="post" action="{{ url_for('admin_toggle', uid=u.id, field='is_bgirl') }}">
+        <button class="switch {{ 'on' if u.is_bgirl }}" role="switch" aria-checked="{{ 'true' if u.is_bgirl else 'false' }}"><i></i></button><span>🎀 Birthday girl (Gmail thank-you)</span></form>
+      <form method="post" action="{{ url_for('admin_toggle', uid=u.id, field='bday_today') }}">
+        <button class="switch {{ 'on' if u.bday_today }}" role="switch" aria-checked="{{ 'true' if u.bday_today else 'false' }}"><i></i></button><span>🎂 Today's birthday (whole site)</span></form>
+    </div>
+    {% endif %}
+  </div>
+  {% else %}<p class="sub">No users yet.</p>{% endfor %}
+</section>
+{% endblock %}
