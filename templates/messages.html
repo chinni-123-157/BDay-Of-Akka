@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Messages{% endblock %}
+{% block content %}
+<section class="glass card msgs">
+  <h1>Messages 💌</h1>
+  {% if not mongo_ok %}<p class="notice">Messages are unavailable right now (MongoDB isn't connected).</p>{% endif %}
+  {% if is_bgirl %}
+  <div class="compose">
+    <h2>Send a thank-you</h2>
+    <p class="sub small">You can send each person up to {{ limit }} messages.</p>
+    <select id="to" aria-label="Recipient"></select>
+    <textarea id="txt" maxlength="500" rows="4" placeholder="Write your message…"></textarea>
+    <p id="status" class="small" role="status"></p>
+    <button class="btn" id="go">Send</button>
+  </div>
+  {% endif %}
+  <h2>Inbox</h2>
+  {% for m in inbox %}
+  <div class="bubble"><b>{{ m.from_name }}</b><p>{{ m.text }}</p><small>{{ m.at.strftime('%d %b, %H:%M') }} UTC</small></div>
+  {% else %}<p class="sub">No messages yet. 🌸</p>{% endfor %}
+</section>
+{% endblock %}
+{% block scripts %}{% if is_bgirl %}<script>
+const R={{ recipients|tojson }}, sel=document.getElementById('to'), txt=document.getElementById('txt'), st=document.getElementById('status');
+function fill(){ sel.innerHTML=''; R.forEach(r=>sel.add(new Option(`${r.name} (${r.left} left)`,r.id))); }
+fill();
+document.getElementById('go').onclick=async()=>{ st.textContent='Sending…';
+  const r=await sendMsg(sel.value,txt.value); st.textContent=r.ok?'Sent 💌':r.error;
+  if(r.ok){ R.find(x=>x.id==sel.value).left=r.left; const v=sel.value; fill(); sel.value=v; txt.value=''; } };
+</script>{% endif %}{% endblock %}
