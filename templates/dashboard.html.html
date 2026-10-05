@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}Home{% endblock %}
+{% block body_class %}dashpage{{ ' birthday-me' if is_bday }}{% endblock %}
+{% block content %}
+<div class="bento">
+  {% if msg %}<p class="notice span-all" role="status">{{ msg }}</p>{% endif %}
+
+  <section class="glass tile hello span2">
+    <p class="eyebrow" id="today"></p>
+    {% if is_bday %}<h1>Happy Birthday,<br><span class="grad">{{ me.name }}</span> 🎂</h1><p class="lead">ఈ రోజు నీదే! నీ కోసం వచ్చిన విషెస్ ఇవిగో 💛</p>
+    {% else %}<h1>Welcome,<br><span class="grad">{{ me.name.split()[0] }}</span> 👋</h1><p class="lead">{{ 'ఈ రోజు ' ~ b.name ~ ' పుట్టినరోజు! విష్ చెయ్యడం మర్చిపోకు 🎉' if b else 'ఈ రోజు ఎవరి పుట్టినరోజు లేదు. కానీ నవ్వడానికి కారణం ఎప్పుడూ ఉంటుంది 😄' }}</p>{% endif %}
+  </section>
+
+  <section class="glass tile bcard {{ 'glow' if b }}">
+    <h2>Today's birthday</h2>
+    {% if b %}
+    <div class="bwho">{% if b_photo %}<img src="{{ b_photo }}" alt="{{ b.name }}" referrerpolicy="no-referrer">{% else %}<span class="avatar big">{{ b.name[:1] }}</span>{% endif %}
+      <div><b>{{ b.name }}</b><br><small>{{ 'That’s you! 🥳' if is_bday else 'Send a wish below' }}</small></div></div>
+    {% if not is_bday %}
+    <label class="lbl" for="wish">Your wish <span id="cnt">0</span>/{{ chars }} · <span id="left">{{ left }}</span> left today</label>
+    <div class="inline"><input id="wish" maxlength="{{ chars }}" placeholder="Happy birthday! 🎂" autocomplete="off"><button class="btn" id="send">Send</button></div>
+    <p id="wmsg" class="small" role="status"></p>
+    {% endif %}
+    {% else %}<p class="sub">🌙 No birthday is switched on right now.</p>{% endif %}
+  </section>
+
+  <section class="glass tile notes">
+    <h2>📣 Admin messages</h2>
+    {% for n in notes %}<div class="note"><p>{{ n.text }}</p><small>{{ n.by }} · {{ n.at|ist }}</small></div>
+    {% else %}<p class="sub">Nothing new from the admin.</p>{% endfor %}
+  </section>
+
+  {% if is_bday %}
+  <section class="glass tile wishes span2">
+    <h2>💌 Your wishes</h2>
+    {% for w in wishes %}<div class="bubble"><b>{{ w.from_name }}</b><p>{{ w.text }}</p></div>
+    {% else %}<p class="sub">Wishes will pop up here as people send them.</p>{% endfor %}
+    <a class="btn ghost" href="{{ url_for('messages') }}">Read all & reply →</a>
+  </section>
+  <a class="glass tile cta-tile" href="{{ url_for('questions') }}"><span>💡</span><b>Play your questions</b><small>10 random funny ones</small></a>
+  {% else %}
+  <nav class="glass tile links" aria-label="Shortcuts">
+    <a href="{{ url_for('wish') }}">🎬<b>Reels</b></a><a href="{{ url_for('questions') }}">💡<b>Questions</b></a><a href="{{ url_for('messages') }}">💌<b>Wishes</b></a>
+  </nav>
+  {% endif %}
+
+  <section class="glass tile upload span2">
+    <h2>📸 Post a photo or video</h2>
+    {% if me.can_upload or me.is_admin %}
+    <form method="post" action="{{ url_for('upload') }}" enctype="multipart/form-data" id="upform">
+      <input type="file" name="file" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,video/quicktime" required aria-label="Photo or video">
+      <input name="caption" maxlength="80" placeholder="Caption (optional)">
+      <button class="btn" id="upbtn">Post</button>
+    </form>
+    <p class="sub small">Photos JPG/PNG/WebP · videos MP4/WebM/MOV up to 25 MB · 10 posts a day.</p>
+    {% else %}<p class="sub">🔒 Uploads are switched off for your account by the admin.</p>{% endif %}
+  </section>
+
+  <section class="glass tile posts span-all">
+    <h2>✨ {{ 'Moments from everyone' }}</h2>
+    <div class="postgrid">
+      {% for p in posts %}
+      <figure class="post">
+        {% if p.kind == 'video' %}<video src="/media/{{ p.id }}" controls playsinline preload="metadata"></video>
+        {% else %}<img src="/media/{{ p.id }}" alt="{{ p.caption or 'Photo by ' ~ p.owner_name }}" loading="lazy">{% endif %}
+        <figcaption><b>{{ p.owner_name }}</b>{% if p.caption %} · {{ p.caption }}{% endif %}</figcaption>
+        {% if me.is_admin or p.owner_uid == me.id %}<form method="post" action="{{ url_for('media_delete', mid=p.id) }}"><button class="mini no" aria-label="Delete post">✕</button></form>{% endif %}
+      </figure>
+      {% else %}<p class="sub">No posts yet. Be the first! 🎉</p>{% endfor %}
+    </div>
+  </section>
+</div>
+{% endblock %}
+{% block scripts %}<script>
+document.getElementById('today').textContent=new Date().toLocaleDateString(undefined,{weekday:'long',day:'numeric',month:'long'});
+const up=document.getElementById('upform'); if(up) up.onsubmit=()=>{ const b=document.getElementById('upbtn'); b.disabled=true; b.textContent='Uploading…'; };
+const w=document.getElementById('wish');
+if(w){ const cnt=document.getElementById('cnt'), m=document.getElementById('wmsg'), l=document.getElementById('left');
+  w.oninput=()=>cnt.textContent=w.value.length;
+  document.getElementById('send').onclick=async()=>{ m.textContent='Sending…'; const r=await sendMsg(0,w.value);
+    if(r.ok){ m.textContent='Sent 💌'; l.textContent=r.left; w.value=''; cnt.textContent=0; } else m.textContent=r.error; }; }
+</script>{% endblock %}
