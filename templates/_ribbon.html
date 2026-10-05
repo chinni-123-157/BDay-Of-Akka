@@ -1,0 +1,4 @@
+{% if bday_on and bdays %}
+<div class="ribbon" role="status"><span aria-hidden="true">🎂</span> Today's birthday:
+  {% for b in bdays %}<strong class="hl-name">{{ b.full_name }}</strong>{{ ", " if not loop.last }}{% endfor %}</div>
+{% endif %}

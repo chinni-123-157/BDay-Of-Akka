@@ -1,0 +1,12 @@
+<form id="wishForm" class="wishform" autocomplete="off" data-left="{{ left }}">
+  <input type="hidden" name="to_id" value="{{ bdays[0].id if bdays|length == 1 and not is_bday else '' }}">
+  <input type="hidden" name="parent_id" value="">
+  {% if bdays|length > 1 and not is_bday %}
+  <label class="sr" for="recipient">Who are you wishing?</label>
+  <select id="recipient">{% for b in bdays %}<option value="{{ b.id }}">{{ b.full_name }}</option>{% endfor %}</select>
+  {% endif %}
+  <label class="sr" for="wishText">Message</label>
+  <div class="row"><input id="wishText" name="text" maxlength="{{ wish_max }}" required placeholder="{{ 'Pick a wish to reply to' if is_bday else 'Write a birthday wish' }}" {{ 'disabled' if is_bday }}>
+  <button class="btn primary" type="submit" {{ 'disabled' if is_bday }}>{{ 'Reply' if is_bday else 'Send' }}</button></div>
+  <p class="muted small"><span id="wishCount">0</span>/{{ wish_max }} characters · <span id="wishLeft">{{ left }}</span> messages left today</p>
+</form>

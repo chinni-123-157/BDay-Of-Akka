@@ -1,0 +1,24 @@
+{% extends "base.html" %}{% block title %}Create account · Birthday Hub{% endblock %}
+{% block content %}
+<main id="main" class="center">
+  <section class="glass card auth wide rise" aria-labelledby="t">
+    <h1 id="t">Join the party</h1>
+    <p class="muted">The admin approves new members before they can see anything.</p>
+    <form id="signupForm" method="post" action="{{ url_for('signup') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <label>Full name<input name="full_name" value="{{ g_name }}" autocomplete="name" required minlength="2" maxlength="80"></label>
+      <fieldset class="cid"><legend>College ID (10 characters)</legend>
+        <div class="boxes" id="cidBoxes">{% for i in range(10) %}<input class="box" name="cid" maxlength="1" autocapitalize="characters" autocomplete="off" spellcheck="false" aria-label="College ID character {{ i+1 }} of 10" required>{% endfor %}</div>
+      </fieldset>
+      <label>Email<input type="email" name="email" value="{{ g_email }}" autocomplete="email" required {{ 'readonly' if g_email }}></label>
+      <div class="two">
+        <label>Password<input type="password" name="password" autocomplete="new-password" minlength="8" maxlength="128" required></label>
+        <label>Date of birth<input type="date" name="dob" min="1950-01-01"></label>
+      </div>
+      <p id="formMsg" class="error" role="alert"></p>
+      <button class="btn primary" type="submit">Create account</button>
+    </form>
+    <p class="muted">Already a member? <a href="{{ url_for('login') }}">Sign in</a></p>
+  </section>
+</main>
+{% endblock %}

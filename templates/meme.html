@@ -1,0 +1,12 @@
+{% extends "base.html" %}{% block title %}Oops · Birthday Hub{% endblock %}
+{% block content %}
+<main id="main" class="center">
+  <section class="meme rise" aria-labelledby="t">
+    <p class="cap top" id="t">Access denied</p>
+    <div class="face" aria-hidden="true">🤦</div>
+    <p class="cap bottom">{{ message }}</p>
+    {% if detail %}<p class="small detail">{{ detail }}</p>{% endif %}
+    <a class="btn primary" href="{{ retry }}">Try again</a>
+  </section>
+</main>
+{% endblock %}

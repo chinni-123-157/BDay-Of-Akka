@@ -1,0 +1,25 @@
+{% extends "base.html" %}{% block title %}Happy Birthday!{% endblock %}
+{% block content %}
+{% include "_ribbon.html" %}
+<main id="main" class="wrap">
+  <header class="hero glass rise">
+    <p class="hello">Happy Birthday,</p>
+    <h1 class="gold">{{ user.full_name.split()[0] }}</h1>
+    <div class="row"><a class="btn primary" href="{{ url_for('questions') }}">Play fun questions</a><a class="btn" href="{{ url_for('reels') }}">Watch video wishes</a></div>
+  </header>
+  <div class="grid2">
+    <section class="glass card stagger" style="--i:1" aria-labelledby="w">
+      <h2 id="w">Wishes for you</h2>
+      <ul id="thread" class="thread" data-mode="inbox" aria-live="polite"></ul>
+      {% include "_wishform.html" %}
+    </section>
+    <section class="glass card stagger" style="--i:2" aria-labelledby="p">
+      <h2 id="p">Photos and videos</h2>
+      {% include "_tiles.html" %}
+      <h3 class="sub">Post one too</h3>
+      {% include "_upload.html" %}
+    </section>
+  </div>
+</main>
+{% include "_dock.html" %}
+{% endblock %}

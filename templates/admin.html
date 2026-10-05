@@ -1,0 +1,75 @@
+{% extends "base.html" %}{% block title %}Admin · Birthday Hub{% endblock %}
+{% block content %}
+{% include "_ribbon.html" %}
+<main id="main" class="wrap">
+  <header class="bar">
+    <div><h1>Admin console</h1><p class="muted">Signed in as {{ user.full_name }}</p></div>
+    <form method="post" action="{{ url_for('logout') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn" type="submit">Sign out</button></form>
+  </header>
+
+  <div class="bento">
+    <section class="glass card stat"><span class="big-n">{{ counts.get('approved',0) }}</span><span>Approved members</span></section>
+    <section class="glass card stat"><span class="big-n warn">{{ counts.get('pending',0) }}</span><span>Waiting for approval</span></section>
+
+    <section class="glass card" aria-labelledby="a1">
+      <div class="switchrow"><div><h2 id="a1">Birthday today</h2><p class="muted small">Highlights the birthday person everywhere, shows wallpapers, unlocks their special page.</p></div>
+        <button class="switch" role="switch" aria-labelledby="a1" aria-checked="{{ 'true' if s.birthday_on == '1' else 'false' }}" data-toggle="birthday_on"><i></i></button></div>
+      <label class="small">Birthday person
+        <select id="bdUser"><option value="0">Auto (by date of birth)</option>
+        {% for u in approved %}<option value="{{ u.id }}" {{ 'selected' if s.birthday_user_id == u.id|string }}>{{ u.full_name }}</option>{% endfor %}</select></label>
+    </section>
+
+    <section class="glass card" aria-labelledby="a2">
+      <div class="switchrow"><div><h2 id="a2">Upload permission</h2><p class="muted small">Lets approved members post videos and photos.</p></div>
+        <button class="switch" role="switch" aria-labelledby="a2" aria-checked="{{ 'true' if s.upload_on == '1' else 'false' }}" data-toggle="upload_on"><i></i></button></div>
+    </section>
+
+    <section class="glass card" aria-labelledby="a3">
+      <h2 id="a3">Message to members</h2>
+      <form id="annForm"><label class="sr" for="annText">Message</label><input id="annText" maxlength="200" required placeholder="Write an announcement"><button class="btn primary" type="submit">Post</button></form>
+      <ul class="plain list">{% for a in anns %}<li>{{ a.text }} <button class="x" data-del="/admin/announce/{{ a.id }}/delete" aria-label="Delete message">✕</button></li>{% endfor %}</ul>
+    </section>
+
+    <section class="glass card" aria-labelledby="a4">
+      <h2 id="a4">Birthday wallpapers</h2>
+      <form id="wallForm" enctype="multipart/form-data"><label class="drop"><input type="file" name="files" multiple required accept="image/jpeg,image/png,image/webp"><span>Choose images (JPG, PNG, WEBP)</span></label><button class="btn primary" type="submit">Upload</button></form>
+      <div class="thumbs">{% for w in walls %}<figure><img src="{{ w.url }}" alt="Wallpaper" loading="lazy"><button class="x" data-del="/admin/wallpapers/{{ w.id }}/delete" aria-label="Delete wallpaper">✕</button></figure>{% else %}<p class="muted small">No wallpapers yet.</p>{% endfor %}</div>
+    </section>
+
+    <section class="glass card wide" aria-labelledby="a5">
+      <h2 id="a5">Members</h2>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Name</th><th>College ID</th><th>Email</th><th>Born</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody>{% for u in users %}
+          <tr><td>{{ u.full_name }}</td><td>{{ u.college_id }}</td><td>{{ u.email }}</td><td>{{ u.dob.strftime('%d %b') if u.dob else '-' }}</td>
+            <td><span class="badge {{ u.status }}">{{ u.status }}</span></td>
+            <td class="acts">
+              {% if u.status != 'approved' %}<button class="btn sm primary" data-status="approved" data-id="{{ u.id }}">Approve</button>{% endif %}
+              {% if u.status != 'denied' %}<button class="btn sm" data-status="denied" data-id="{{ u.id }}">Deny</button>{% endif %}
+              <button class="btn sm" data-reset="{{ u.id }}">Reset password</button></td></tr>
+        {% else %}<tr><td colspan="6" class="muted">No members yet.</td></tr>{% endfor %}</tbody>
+      </table></div>
+    </section>
+
+    <section class="glass card wide" aria-labelledby="a6">
+      <h2 id="a6">Recent posts</h2>
+      <div class="thumbs">{% for m in items %}<figure>
+        {% if m.kind == 'video' %}<video src="{{ m.url }}#t=0.1" muted preload="metadata"></video>{% else %}<img src="{{ m.url }}" alt="Photo by {{ m.uploader_name }}" loading="lazy">{% endif %}
+        <figcaption>{{ m.uploader_name }}</figcaption><button class="x" data-del="/admin/media/{{ m.id }}/delete" aria-label="Delete post">✕</button></figure>
+      {% else %}<p class="muted small">No posts yet.</p>{% endfor %}</div>
+    </section>
+  </div>
+
+  <dialog id="resetDlg" class="sheet" aria-labelledby="rt">
+    <h2 id="rt">Send reset link</h2>
+    <p class="muted">For <strong id="rName"></strong> (<span id="rEmail"></span>). The link works once and expires in 1 hour.</p>
+    <input id="rLink" readonly aria-label="Reset link">
+    <div class="row wrapbtn">
+      <a class="btn primary" id="rMail" href="#">Open email app</a>
+      <a class="btn" id="rGmail" href="#" target="_blank" rel="noopener">Open Gmail</a>
+      <button class="btn" id="rCopy" type="button">Copy link</button>
+      <button class="btn" id="rClose" type="button">Close</button>
+    </div>
+  </dialog>
+</main>
+{% endblock %}
