@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 {% extends "base.html" %}{% block title %}Waiting for approval{% endblock %}
 {% block content %}
 <main id="main" class="center">
@@ -10,18 +9,3 @@
   </section>
 </main>
 {% endblock %}
-=======
-{% extends "base.html" %}
-{% block title %}Waiting for permission{% endblock %}
-{% block content %}
-<section class="glass card hero">
-  <p class="flute">{{ '⏳' if user.status == 'pending' else '🚫' }}</p>
-  <h1>{{ 'Permission requested' if user.status == 'pending' else 'Access not granted' }}</h1>
-  <p class="sub">{% if user.status == 'pending' %}Hi {{ user.name }}, your request is with the host. This page opens the site automatically once you're accepted.{% else %}Sorry {{ user.name }}, the host didn't approve this account.{% endif %}</p>
-  <a class="btn ghost" href="{{ url_for('logout') }}">Log out</a>
-</section>
-{% endblock %}
-{% block scripts %}{% if user.status == 'pending' %}<script>
-setInterval(async()=>{ try{ const r=await (await fetch('/api/status')).json(); if(r.status==='approved') location.href='/landing'; }catch{} },6000);
-</script>{% endif %}{% endblock %}
->>>>>>> 2ca04a679866463af5912f6698af40ad97731308

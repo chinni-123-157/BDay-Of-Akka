@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 {% extends "base.html" %}{% block title %}Reset password{% endblock %}
 {% block content %}
 <main id="main" class="center">
@@ -18,21 +17,4 @@
   {% endif %}
   </section>
 </main>
-=======
-{% extends "base.html" %}
-{% block title %}Reset password{% endblock %}
-{% block body_class %}authpage{% endblock %}
-{% block content %}
-<section class="glass card hero">
-  {% if bad %}<p class="flute">⏰</p><h1>Link expired</h1><p class="sub">This reset link is invalid, already used, or older than 24 hours. Ask the admin for a new one.</p>
-  <a class="btn" href="{{ url_for('home') }}">Back to login</a>
-  {% else %}<p class="flute">🔑</p><h1>New password</h1><p class="sub">Hi {{ name }}, choose a new password.</p>
-  {% if err %}<p class="notice">{{ err }}</p>{% endif %}
-  <form method="post">
-    <input name="password" type="password" placeholder="New password (6+ characters)" minlength="6" autocomplete="new-password" required>
-    <input name="confirm" type="password" placeholder="Confirm password" minlength="6" autocomplete="new-password" required>
-    <button class="btn">Save password</button>
-  </form>{% endif %}
-</section>
->>>>>>> 2ca04a679866463af5912f6698af40ad97731308
 {% endblock %}
