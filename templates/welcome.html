@@ -8,7 +8,7 @@
   <p class="lead">{% if is_me %}ఈ రోజు నీదే — మేమంతా నీ కోసం ఇక్కడున్నాం 💛{% else %}అందరం కలిసి గ్రాండ్‌గా విష్ చేద్దాం! 🥳{% endif %}</p>
   <div class="photos" id="photos" aria-label="Birthday photos"></div>
   <div class="wishgrid">{% for w in wishes %}<div class="glass wishcard" style="animation-delay:{{ loop.index0 * 0.12 }}s">{{ w }}</div>{% endfor %}</div>
-  <a class="btn cta" href="{{ url_for('wish') }}">Watch the video wishes ▶</a>
+  <a class="btn cta" href="{{ url_for('dashboard') }}">Go to my dashboard →</a>
 </section>
 {% endblock %}
 {% block scripts %}<script>
