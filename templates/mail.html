@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Thank you{% endblock %}
+{% block content %}
+<section class="glass card hero">
+  <p class="flute">{{ '💛' if action=='like' else '✉️' }}</p>
+  <h1>Thank you, {{ session.name }}!</h1>
+  <p class="sub">{% if sent %}A thank-you mail is on its way to {{ session.email }}.{% else %}Mail isn't set up on the server yet, so nothing was sent. Add the SMTP settings to turn it on.{% endif %}</p>
+  <a class="btn" href="{{ url_for('questions') }}">Play the questions</a>
+  <a class="btn ghost" href="{{ url_for('wish') }}">Back to videos</a>
+</section>
+{% endblock %}

@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 {% extends "base.html" %}{% block title %}Fun questions{% endblock %}
 {% block content %}
 {% include "_ribbon.html" %}
@@ -16,3 +17,37 @@
 </main>
 {% include "_dock.html" %}
 {% endblock %}
+=======
+{% extends "base.html" %}
+{% block title %}ప్రశ్నలు{% endblock %}
+{% block body_class %}quizpage{% endblock %}
+{% block content %}
+<section class="glass card quiz">
+  <p class="sub" id="count"></p>
+  <h2 id="q"></h2>
+  <div class="answers">
+    <button class="btn yes" id="yes">అవును</button>
+    <button class="btn no" id="no">కాదు</button>
+  </div>
+  <div id="pop" class="pop" hidden></div>
+  <a class="btn ghost" id="again" href="{{ url_for('questions') }}" hidden>మళ్ళీ ఆడు 🔁</a>
+  <button class="btn ghost" id="secret">రహస్య సందేశం 🤫</button>
+</section>
+<div id="toast" class="toast" hidden></div>
+{% endblock %}
+{% block scripts %}<script>
+const Q={{ qs|tojson }}; let i=0;
+const $=id=>document.getElementById(id), no=$('no'), pop=$('pop');
+function show(){
+  if(i>=Q.length){ $('q').textContent='అన్ని ప్రశ్నలు అయిపోయాయి! ట్రీట్ ఎప్పుడు? 🎉'; $('count').textContent='అయిపోయింది'; $('yes').hidden=no.hidden=true; $('again').hidden=false; return; }
+  $('count').textContent=`ప్రశ్న ${i+1} / ${Q.length}`; $('q').textContent=Q[i].text; pop.hidden=true; no.style.transform='';
+}
+function dodge(e){ e.preventDefault(); const r=Math.min(innerWidth,500)/2.2;
+  no.style.transform=`translate(${(Math.random()-.5)*2*r}px,${(Math.random()-.5)*160}px)`; }
+no.addEventListener('mouseenter',dodge); no.addEventListener('touchstart',dodge,{passive:false}); no.addEventListener('click',dodge);
+$('yes').onclick=()=>{ pop.textContent=Q[i].popup; pop.hidden=false; pop.classList.remove('bump'); void pop.offsetWidth; pop.classList.add('bump');
+  setTimeout(()=>{i++;show();},2400); };
+$('secret').onclick=()=>{ const t=$('toast'); t.textContent='part ledhu aa akkaaaaa'; t.hidden=false; setTimeout(()=>t.hidden=true,3500); };
+show();
+</script>{% endblock %}
+>>>>>>> 2ca04a679866463af5912f6698af40ad97731308

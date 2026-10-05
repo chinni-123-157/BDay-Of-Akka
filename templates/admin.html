@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 {% extends "base.html" %}{% block title %}Admin · Birthday Hub{% endblock %}
 {% block content %}
 {% include "_ribbon.html" %}
@@ -73,3 +74,88 @@
   </dialog>
 </main>
 {% endblock %}
+=======
+{% extends "base.html" %}
+{% block title %}Admin dashboard{% endblock %}
+{% block body_class %}adminpage{% endblock %}
+{% block content %}
+<section class="adm">
+  <header class="adm-head"><h1>Admin dashboard</h1><p class="sub">Approve people, switch features on or off, and send password-reset links.</p></header>
+  {% if msg %}<p class="notice" role="status">{{ msg }}</p>{% endif %}
+  <div class="statrow">
+    <div class="glass stat"><b>{{ stats.total }}</b><span>Users</span></div>
+    <div class="glass stat {{ 'hot' if stats.pending }}"><b>{{ stats.pending }}</b><span>Waiting</span></div>
+    <div class="glass stat"><b>{{ stats.approved }}</b><span>Approved</span></div>
+    <div class="glass stat"><b>{{ stats.bday }}</b><span>Birthday today</span></div>
+  </div>
+
+  <div class="usergrid">
+    {% for u in users %}
+    <article class="glass ucard {{ u.status }}">
+      <header>
+        {% if u.picture %}<img class="avatar" src="{{ u.picture }}" alt="" referrerpolicy="no-referrer">{% else %}<span class="avatar">{{ u.name[:1] }}</span>{% endif %}
+        <div class="info"><b>{{ u.name }}</b>{% if u.is_admin %} <small>admin</small>{% endif %}<br><small>#{{ u.id }}</small></div>
+        <span class="pill {{ u.status }}">{{ u.status }}</span>
+      </header>
+      <dl>
+        <dt>Username</dt><dd>{{ u.username or '—' }}</dd>
+        <dt>Email</dt><dd>{{ u.email }}</dd>
+        <dt>College ID</dt><dd>{{ u.college_id or '—' }}</dd>
+      </dl>
+      {% if u.id != me %}
+      <div class="acts">
+        {% if u.status != 'approved' %}<form method="post" action="{{ url_for('admin_action', uid=u.id, action='approve') }}"><button class="mini ok">Accept</button></form>{% endif %}
+        {% if u.status != 'rejected' %}<form method="post" action="{{ url_for('admin_action', uid=u.id, action='reject') }}"><button class="mini no">{{ 'Revoke' if u.status == 'approved' else 'Reject' }}</button></form>{% endif %}
+        {% if not (u.is_admin and u.username == builtin) %}<button class="mini key" data-id="{{ u.id }}">🔑 Reset password</button>{% endif %}
+      </div>
+      {% endif %}
+      {% if u.status == 'approved' %}
+      <div class="switches">
+        <form method="post" action="{{ url_for('admin_toggle', uid=u.id, field='bday_today') }}">
+          <button class="switch {{ 'on' if u.bday_today }}" role="switch" aria-checked="{{ 'true' if u.bday_today else 'false' }}" aria-label="Birthday toggle for {{ u.name }}"><i></i></button><span>🎂 Birthday</span></form>
+        <form method="post" action="{{ url_for('admin_toggle', uid=u.id, field='can_upload') }}">
+          <button class="switch {{ 'on' if u.can_upload }}" role="switch" aria-checked="{{ 'true' if u.can_upload else 'false' }}" aria-label="Upload toggle for {{ u.name }}"><i></i></button><span>📸 Upload</span></form>
+      </div>
+      {% endif %}
+    </article>
+    {% endfor %}
+  </div>
+
+  <div class="adm-bottom">
+    <section class="glass panel">
+      <h2>📣 Message to all dashboards</h2>
+      <form method="post" action="{{ url_for('announce') }}"><input name="text" maxlength="200" placeholder="e.g. Cake cutting at 6 PM!" required><button class="btn">Post</button></form>
+      {% for n in notes %}<form method="post" action="{{ url_for('announce_delete', aid=n.id) }}" class="note"><p>{{ n.text }}</p><button class="mini no" aria-label="Delete message">✕</button></form>{% endfor %}
+    </section>
+    <section class="glass panel">
+      <h2>🖼️ Default wallpapers</h2>
+      <p class="sub small">Used until a birthday is on; then the birthday person's photos take over. {% if not mongo_ok %}<b>Needs MONGO_URI.</b>{% endif %}</p>
+      <form method="post" action="{{ url_for('upload_wallpapers') }}" enctype="multipart/form-data" class="upload"><input type="file" name="images" accept="image/*" multiple required><button class="btn">Upload</button></form>
+      <div class="wallgrid">{% for w in walls %}<form method="post" action="{{ url_for('delete_wallpaper', wid=w) }}"><img src="/media/wp/{{ w }}" alt="wallpaper" loading="lazy"><button class="mini no" aria-label="Delete wallpaper">✕</button></form>{% endfor %}</div>
+    </section>
+  </div>
+</section>
+
+<dialog id="dlg" class="glass dlg" aria-labelledby="dtitle">
+  <h2 id="dtitle">Reset link ready 🔑</h2>
+  <p id="dtext" class="sub"></p>
+  <code id="dlink"></code>
+  <a class="btn" id="mailbtn" href="#">✉️ Open email app</a>
+  <button class="btn ghost" id="copy">Copy link</button>
+  <button class="btn ghost" id="close">Close</button>
+</dialog>
+{% endblock %}
+{% block scripts %}<script>
+const dlg=document.getElementById('dlg'), enc=encodeURIComponent;
+document.querySelectorAll('.key').forEach(btn=>btn.onclick=async()=>{
+  btn.disabled=true; const r=await fetch(`/admin/${btn.dataset.id}/reset`,{method:'POST'}); const d=await r.json(); btn.disabled=false;
+  const t=document.getElementById('dtext'), l=document.getElementById('dlink'), mb=document.getElementById('mailbtn');
+  if(!r.ok){ document.getElementById('dtitle').textContent='Could not reset'; t.textContent=d.error; l.hidden=mb.hidden=document.getElementById('copy').hidden=true; }
+  else { document.getElementById('dtitle').textContent='Reset link ready 🔑'; l.hidden=mb.hidden=document.getElementById('copy').hidden=false;
+    t.textContent=`Send this link to ${d.name} (valid 24 hours, works once).`; l.textContent=d.link;
+    mb.href=`mailto:${d.email}?subject=${enc('Reset your password')}&body=${enc(`Hi ${d.name},\n\nUse this link to set a new password (valid for 24 hours):\n${d.link}\n\nIf you didn't ask for this, ignore this email.`)}`; }
+  dlg.showModal(); });
+document.getElementById('close').onclick=()=>dlg.close();
+document.getElementById('copy').onclick=async e=>{ try{ await navigator.clipboard.writeText(document.getElementById('dlink').textContent); e.target.textContent='Copied ✓'; }catch{} };
+</script>{% endblock %}
+>>>>>>> 2ca04a679866463af5912f6698af40ad97731308

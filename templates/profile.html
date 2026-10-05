@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Complete profile{% endblock %}
+{% block content %}
+<section class="glass card hero">
+  <p class="flute">📝</p><h1>One last step</h1>
+  <p class="sub">Add your full name and college ID so the host can approve you.</p>
+  {% if err %}<p class="notice">{{ err }}</p>{% endif %}
+  <form method="post">
+    <input name="name" value="{{ user.name }}" placeholder="Full name" required>
+    <input value="{{ user.email }}" disabled aria-label="Email">
+    <label class="lbl">College ID</label>
+    <div class="ids" data-name="college_id" role="group" aria-label="College ID, 10 characters"></div>
+    <button class="btn">Continue</button>
+  </form>
+</section>
+{% endblock %}

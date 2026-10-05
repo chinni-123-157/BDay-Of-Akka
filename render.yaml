@@ -1,5 +1,6 @@
 services:
   - type: web
+<<<<<<< HEAD
     name: birthday-hub
     runtime: python
     plan: free
@@ -16,3 +17,19 @@ services:
       - { key: ADMIN_USERNAME, sync: false }
       - { key: ADMIN_PASSWORD, sync: false }
       - { key: ADMIN_EMAILS, sync: false }
+=======
+    name: birthday-site
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    envVars:
+      - {key: PYTHON_VERSION, value: 3.12.8}
+      - {key: SECRET_KEY, generateValue: true}
+      - {key: DATABASE_URL, sync: false}
+      - {key: MONGO_URI, sync: false}
+      - {key: GOOGLE_CLIENT_ID, sync: false}
+      - {key: GOOGLE_CLIENT_SECRET, sync: false}
+      - {key: ADMIN_USERNAME, value: Chinni_Admin}
+      - {key: ADMIN_PASSWORD, sync: false}
+      - {key: ADMIN_EMAILS, sync: false}
+>>>>>>> 2ca04a679866463af5912f6698af40ad97731308
