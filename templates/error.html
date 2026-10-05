@@ -4,12 +4,13 @@
 {% block content %}
 <section class="memes">
   {% for m in memes %}<img src="{{ m.url }}" alt="meme" loading="lazy">{% else %}
-  <div class="meme-ph">🤡<br>Add memes to <code>static/memes/</code></div>{% endfor %}
+  {% for cap, em in [("ఏంటి రా ఇది? పాస్‌వర్డ్ కూడా గుర్తులేదా?","🤦"),("అమ్మాయ్ ఇంకోసారి ట్రై చెయ్యి!","🙄"),("హ్యాకర్ అనుకున్నా... నువ్వా? 😂","🕵️"),("ఇంటికి వెళ్ళి పాస్‌వర్డ్ గుర్తు తెచ్చుకో","🏠")] %}
+  <div class="memecard"><span>{{ em }}</span><b>{{ cap }}</b></div>{% endfor %}{% endfor %}
 </section>
 <section class="card chat">
-  <h1>Ame Ra bala raju emina pani chesuko ra</h1>
-  <div id="log"><p class="bot">Wrong key or password. Em chestham ra... 🤷</p></div>
-  <form id="f"><input id="m" placeholder="Bot tho matladu..." autocomplete="off"><button class="btn">Send</button></form>
+  <h1>Login failed! 🚨</h1>
+  <div id="log"><p class="bot">Wrong username or password. Ame Ra bala raju emina pani chesuko ra 🤷</p></div>
+  <form id="f"><input id="m" placeholder="Bot tho matladu..." autocomplete="off" aria-label="Chat with the bot"><button class="btn">Send</button></form>
   <a class="btn again" href="{{ url_for('home') }}">Try again</a>
 </section>
 {% endblock %}
