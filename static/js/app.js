@@ -49,10 +49,11 @@ document.querySelectorAll(".ids").forEach(box => {
   document.body.append(box);
 })();
 
-// Birthday girl -> in-app message (stored in MongoDB, max 10 per person)
+// In-app wish / reply (stored in MongoDB; 50 chars, 10 per day)
 async function sendMsg(to, text) {
   try {
     const r = await fetch("/api/messages", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ to, text }) });
     const d = await r.json(); return r.ok ? d : { error: d.error || "Couldn't send." };
   } catch { return { error: "Network problem. Try again." }; }
 }
+
