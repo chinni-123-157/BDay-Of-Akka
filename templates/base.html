@@ -13,10 +13,11 @@
 <div class="wall" id="wallA"></div><div class="wall" id="wallB"></div><div class="veil"></div>
 {% if session.uid %}
 <nav class="glass nav" aria-label="Main">
-  <a href="{{ url_for('wish') }}">🎬 Wishes</a>
+  <a href="{{ url_for('dashboard') }}">🏠 Home</a>
+  <a href="{{ url_for('wish') }}">🎬 Reels</a>
   <a href="{{ url_for('questions') }}">💡 Questions</a>
-  <a href="{{ url_for('messages') }}">💌 Messages{% if unread %}<em class="badge">{{ unread }}</em>{% endif %}</a>
-  {% if bday %}<a href="{{ url_for('welcome') }}">🎉</a>{% endif %}
+  <a href="{{ url_for('messages') }}">💌 Wishes{% if unread %}<em class="badge">{{ unread }}</em>{% endif %}</a>
+  {% if bday %}<a href="{{ url_for('welcome') }}" aria-label="Birthday celebration">🎉</a>{% endif %}
   {% if session.admin %}<a href="{{ url_for('admin') }}">⚙️ Admin</a>{% endif %}
   <span class="grow"></span>
   <span class="who">{{ session.name }}</span>
