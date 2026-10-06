@@ -1,0 +1,11 @@
+{% if can_upload %}
+<form id="uploadForm" class="upload" enctype="multipart/form-data">
+  <label class="drop"><input type="file" name="file" required accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm,video/quicktime"><span>Choose a clip or photo (max {{ max_mb }} MB)</span></label>
+  <label class="sr" for="caption">Caption</label>
+  <input id="caption" name="caption" maxlength="80" placeholder="Caption (optional)">
+  <progress id="upProg" max="100" value="0" hidden aria-label="Upload progress"></progress>
+  <button class="btn primary" type="submit">Post</button>
+</form>
+{% else %}
+<p class="muted">Posting is closed right now. The admin will open it soon.</p>
+{% endif %}

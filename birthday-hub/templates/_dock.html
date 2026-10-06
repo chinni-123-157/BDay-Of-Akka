@@ -1,0 +1,7 @@
+<nav class="dock" aria-label="Main">
+  <a href="{{ url_for('dashboard') }}"{% if page in ('dashboard','birthday') %} aria-current="page"{% endif %}><i aria-hidden="true">🏠</i><span>Home</span></a>
+  <a href="{{ url_for('reels') }}"{% if page=='reels' %} aria-current="page"{% endif %}><i aria-hidden="true">🎬</i><span>Reels</span></a>
+  {% if priv %}<a href="{{ url_for('questions') }}"{% if page=='questions' %} aria-current="page"{% endif %}><i aria-hidden="true">🎲</i><span>Play</span></a>{% endif %}
+  <a href="{{ url_for('gift') }}"{% if page=='gift' %} aria-current="page"{% endif %}><i aria-hidden="true">🎁</i><span>Gifts</span></a>
+  <form method="post" action="{{ url_for('logout') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button type="submit"><i aria-hidden="true">👋</i><span>Sign out</span></button></form>
+</nav>

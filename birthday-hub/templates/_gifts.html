@@ -1,0 +1,11 @@
+<ul class="wall">
+{% for x in gifts %}
+  <li class="gift">
+    <b>{{ x.from_name }}{% if x.to_name %} → {{ x.to_name }}{% endif %} · {{ {'text':'✍️ Text','voice':'🎙️ Voice','video':'🎥 Video'}[x.kind] }}</b>
+    {% if x.kind == 'voice' %}<audio controls preload="none" src="{{ x.url }}" aria-label="Voice gift from {{ x.from_name }}"></audio>
+    {% elif x.kind == 'video' %}<video controls preload="metadata" playsinline src="{{ x.url }}" aria-label="Video gift from {{ x.from_name }}"></video>{% endif %}
+    {% if x.text %}<p>{{ x.text }}</p>{% endif %}
+    <time data-t="{{ x.at }}" datetime="{{ x.at }}"></time>
+  </li>
+{% else %}<li class="muted">No gifts yet. Be the first to send one!</li>{% endfor %}
+</ul>

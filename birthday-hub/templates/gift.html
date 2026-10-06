@@ -1,0 +1,43 @@
+{% extends "base.html" %}{% block title %}Gifts · Birthday Hub{% endblock %}
+{% block content %}
+{% include "_ribbon.html" %}
+<main id="main" class="wrap">
+  <header class="hero rise"><p class="hello">Birthday gifts</p><h1>Send a message 🎁</h1><p class="muted">Text, voice or video. Everyone in the app can see gifts on the wall.</p></header>
+  <div class="grid2">
+    <section class="glass card stagger" style="--i:1" aria-labelledby="c">
+      <h2 id="c">Create a gift</h2>
+      <div class="ktabs" role="tablist" aria-label="Gift type">
+        <button type="button" role="tab" aria-selected="true" data-kind="text">✍️ Text</button>
+        <button type="button" role="tab" aria-selected="false" data-kind="voice">🎙️ Voice</button>
+        <button type="button" role="tab" aria-selected="false" data-kind="video">🎥 Video</button>
+      </div>
+      <form id="giftForm">
+        <div data-panel="text">
+          <label for="giftText">Your message</label>
+          <textarea id="giftText" maxlength="280" placeholder="Write something sweet…"></textarea>
+          <p class="small muted"><span id="giftCount">0</span>/280</p>
+        </div>
+        <div data-panel="media" hidden>
+          <div class="rec">
+            <video id="live" muted playsinline hidden></video>
+            <div id="preview" class="hidden"></div>
+            <button class="recbtn" id="recBtn" type="button" aria-label="Start recording"><span aria-hidden="true">●</span></button>
+            <p id="recInfo" class="small muted" aria-live="polite">Tap the red button to record</p>
+            <label class="drop">or choose a file<input type="file" id="giftFile" class="sr" accept="audio/*,video/*"></label>
+          </div>
+          <label for="giftCap">Caption (optional)</label>
+          <input id="giftCap" maxlength="120" placeholder="Add a caption">
+        </div>
+        <p id="giftErr" class="error" role="alert"></p>
+        <button class="btn primary" id="giftSend" type="submit">Send gift</button>
+      </form>
+    </section>
+    <section class="glass card stagger" style="--i:2" aria-labelledby="w">
+      <h2 id="w">Gift wall</h2>
+      {% include "_gifts.html" %}
+    </section>
+  </div>
+  <div class="state hidden" id="giftState" role="status" aria-live="assertive"></div>
+</main>
+{% include "_dock.html" %}
+{% endblock %}

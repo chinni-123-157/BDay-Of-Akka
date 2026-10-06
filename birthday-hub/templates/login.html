@@ -1,0 +1,19 @@
+{% extends "base.html" %}{% block title %}Sign in · Birthday Hub{% endblock %}
+{% block content %}
+<main id="main" class="center">
+  <i class="orb o1"></i><i class="orb o2"></i><i class="orb o3"></i>
+  <section class="glass card auth rise" aria-labelledby="t">
+    <div class="logo" aria-hidden="true">🎂</div>
+    <h1 id="t">Sign in to see the content</h1>
+    <form method="post" action="{{ url_for('login') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <label>College ID, email or admin username<input name="identifier" autocomplete="username" required autofocus></label>
+      <label>Password<input type="password" name="password" autocomplete="current-password" required></label>
+      <button class="btn primary" type="submit">Enter</button>
+    </form>
+    {% if google %}<div class="or"><span>or</span></div>
+    <a class="btn google" href="{{ url_for('google_login') }}"><b class="g" aria-hidden="true">G</b> Sign in with Google</a>{% endif %}
+    <p class="muted">New here? <a href="{{ url_for('signup') }}">Create an account</a></p>
+  </section>
+</main>
+{% endblock %}

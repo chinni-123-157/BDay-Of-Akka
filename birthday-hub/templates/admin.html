@@ -1,0 +1,125 @@
+{% extends "base.html" %}{% block title %}Admin · Birthday Hub{% endblock %}
+{% block content %}
+<div class="adm">
+  <nav class="side" aria-label="Admin sections">
+    <h1>🎂 Admin</h1>
+    <div role="tablist" aria-orientation="vertical" style="display:contents">
+      <button role="tab" data-tab="overview" aria-selected="true">📊 Overview</button>
+      <button role="tab" data-tab="members" aria-selected="false">👥 Members</button>
+      <button role="tab" data-tab="posts" aria-selected="false">🖼️ Posts</button>
+      <button role="tab" data-tab="gifts" aria-selected="false">🎁 Gifts</button>
+      <button role="tab" data-tab="messages" aria-selected="false">💬 Messages</button>
+      <button role="tab" data-tab="activity" aria-selected="false">❤️ Activity</button>
+    </div>
+    <div class="spacer"></div>
+    <form method="post" action="{{ url_for('logout') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn" type="submit">Sign out</button></form>
+  </nav>
+
+  <main id="main" class="main">
+    {% include "_ribbon.html" %}
+
+    <!-- OVERVIEW -->
+    <section class="panel" id="tab-overview" role="tabpanel">
+      <div class="ph"><h2>Overview</h2><span class="muted small">Signed in as {{ user.full_name }}</span></div>
+      <div class="bento">
+        <div class="glass card stat s3"><span class="big-n">{{ counts.get('approved',0) }}</span><span class="muted">Approved members</span></div>
+        <div class="glass card stat s3"><span class="big-n warn">{{ counts.get('pending',0) }}</span><span class="muted">Waiting for approval</span></div>
+        <div class="glass card stat s3"><span class="big-n">{{ totals.posts }}</span><span class="muted">Posts</span></div>
+        <div class="glass card stat s3"><span class="big-n">{{ totals.gifts }}</span><span class="muted">Gifts</span></div>
+
+        <section class="glass card" aria-labelledby="tg">
+          <h2 id="tg">Controls</h2>
+          <div class="switchrow"><div><h3 id="t1">Birthday today</h3><p class="muted small">Highlights the birthday people everywhere and shows random wallpapers to everyone.</p></div>
+            <button class="switch" role="switch" aria-labelledby="t1" aria-checked="{{ 'true' if s.birthday_on == '1' else 'false' }}" data-toggle="birthday_on"><i></i></button></div>
+          <div class="switchrow"><div><h3 id="t2">Birthday privileges</h3><p class="muted small">Lets the birthday person comment privately on posts, post media and play the fun questions.</p></div>
+            <button class="switch" role="switch" aria-labelledby="t2" aria-checked="{{ 'true' if s.privileges_on == '1' else 'false' }}" data-toggle="privileges_on"><i></i></button></div>
+          <div class="switchrow"><div><h3 id="t3">Upload for everyone</h3><p class="muted small">Any approved member can post. Turn it off to allow only members you switch on individually.</p></div>
+            <button class="switch" role="switch" aria-labelledby="t3" aria-checked="{{ 'true' if s.upload_on == '1' else 'false' }}" data-toggle="upload_on"><i></i></button></div>
+        </section>
+
+        <section class="glass card" aria-labelledby="bp">
+          <h2 id="bp">Birthday people</h2>
+          <p class="muted small">Pick one or more members. Leave all unticked to use each member's date of birth.</p>
+          <div class="chips" id="bdChips">
+            {% for u in approved %}<label class="chip"><input type="checkbox" value="{{ u.id }}" {{ 'checked' if manual and u.id in picked }}><span>{{ u.full_name }}</span></label>
+            {% else %}<p class="muted small">No approved members yet.</p>{% endfor %}
+          </div>
+          <div class="row"><button class="btn primary sm" id="bdSave" type="button">Save selection</button><button class="btn sm" id="bdAuto" type="button">Use date of birth</button></div>
+          <p class="small muted" style="margin-top:.6rem">Today: {% if picked %}{% for u in approved if u.id in picked %}<strong>{{ u.full_name }}</strong>{{ ", " if not loop.last }}{% endfor %}{% else %}nobody{% endif %} · mode: {{ 'manual' if manual else 'automatic' }}</p>
+        </section>
+      </div>
+    </section>
+
+    <!-- MEMBERS -->
+    <section class="panel" id="tab-members" role="tabpanel" hidden>
+      <div class="ph"><h2>Members</h2><div style="min-width:min(300px,100%)"><label class="sr" for="mSearch">Search members</label><input id="mSearch" type="search" placeholder="Search name, ID or email"></div></div>
+      <div class="glass card"><div class="table-wrap"><table>
+        <thead><tr><th>Name</th><th>College ID</th><th>Email</th><th>Born</th><th>Status</th><th>Can post</th><th>Actions</th></tr></thead>
+        <tbody id="mBody">{% for u in users %}
+          <tr><td>{{ u.full_name }}</td><td>{{ u.college_id }}</td><td>{{ u.email }}</td><td>{{ u.dob.strftime('%d %b') if u.dob else '-' }}</td>
+            <td><span class="badge {{ u.status }}">{{ u.status }}</span></td>
+            <td><button class="switch" role="switch" aria-label="Allow {{ u.full_name }} to upload" aria-checked="{{ 'true' if u.can_upload else 'false' }}" data-uptoggle="{{ u.id }}"><i></i></button></td>
+            <td><div class="acts">
+              {% if u.status != 'approved' %}<button class="btn sm primary" data-status="approved" data-id="{{ u.id }}">Approve</button>{% endif %}
+              {% if u.status != 'denied' %}<button class="btn sm" data-status="denied" data-id="{{ u.id }}">Deny</button>{% endif %}
+              <button class="btn sm" data-reset="{{ u.id }}">Reset password</button></div></td></tr>
+        {% else %}<tr><td colspan="7" class="muted">No members yet.</td></tr>{% endfor %}</tbody>
+      </table></div></div>
+    </section>
+
+    <!-- POSTS -->
+    <section class="panel" id="tab-posts" role="tabpanel" hidden>
+      <div class="ph"><h2>Posts</h2></div>
+      <div class="bento">
+        <section class="glass card s12" aria-labelledby="pp"><h2 id="pp">Post a photo or video</h2>
+          <p class="muted small">Shown to every approved member. Admin posts always work.</p>{% include "_upload.html" %}</section>
+        <section class="glass card s12" aria-labelledby="pl"><h2 id="pl">All posts</h2>
+          <div class="thumbs">{% for m in items %}<figure>
+            {% if m.kind == 'video' %}<video src="{{ m.url }}#t=0.1" muted preload="metadata"></video>{% else %}<img src="{{ m.url }}" alt="Photo by {{ m.uploader_name }}" loading="lazy">{% endif %}
+            <figcaption>{{ m.uploader_name }} · ♥ {{ m.likes }}</figcaption><button class="x" data-del="/admin/media/{{ m.id }}/delete" data-what="post" aria-label="Delete post by {{ m.uploader_name }}">✕</button></figure>
+          {% else %}<p class="muted small">No posts yet.</p>{% endfor %}</div></section>
+        <section class="glass card s12" aria-labelledby="wl"><h2 id="wl">Birthday wallpapers</h2>
+          <form id="wallForm" class="inline" enctype="multipart/form-data"><label class="drop" style="flex:1">Choose images (JPG, PNG, WEBP)<input type="file" name="files" multiple required accept="image/jpeg,image/png,image/webp"></label><button class="btn primary" type="submit">Upload</button></form>
+          <div class="thumbs">{% for w in walls %}<figure><img src="{{ w.url }}" alt="Wallpaper" loading="lazy"><button class="x" data-del="/admin/wallpapers/{{ w.id }}/delete" data-what="wallpaper" aria-label="Delete wallpaper">✕</button></figure>{% else %}<p class="muted small">No wallpapers yet.</p>{% endfor %}</div></section>
+      </div>
+    </section>
+
+    <!-- GIFTS -->
+    <section class="panel" id="tab-gifts" role="tabpanel" hidden>
+      <div class="ph"><h2>Gifts</h2></div>
+      <div class="gwall">{% for x in gifts %}
+        <article class="gift"><b>{{ x.from_name }}{% if x.to_name %} → {{ x.to_name }}{% endif %} · {{ x.kind }}</b>
+          {% if x.kind == 'voice' %}<audio controls preload="none" src="{{ x.url }}"></audio>{% elif x.kind == 'video' %}<video controls preload="metadata" playsinline src="{{ x.url }}"></video>{% endif %}
+          {% if x.text %}<p>{{ x.text }}</p>{% endif %}<time data-t="{{ x.at }}" datetime="{{ x.at }}"></time>
+          <button class="x" data-del="/admin/gifts/{{ x.id }}/delete" data-what="gift" aria-label="Delete gift from {{ x.from_name }}">✕</button></article>
+      {% else %}<p class="muted">No gifts yet.</p>{% endfor %}</div>
+    </section>
+
+    <!-- MESSAGES -->
+    <section class="panel" id="tab-messages" role="tabpanel" hidden>
+      <div class="ph"><h2>Messages</h2></div>
+      <div class="bento">
+        <section class="glass card" aria-labelledby="am"><h2 id="am">Announcements</h2>
+          <form id="annForm" class="inline"><label class="sr" for="annText">Message</label><input id="annText" maxlength="200" required placeholder="Write an announcement"><button class="btn primary" type="submit">Post</button></form>
+          <ul class="rows">{% for a in anns %}<li><span>{{ a.text }}</span><button class="x" data-del="/admin/announce/{{ a.id }}/delete" data-what="message" aria-label="Delete announcement">✕</button></li>{% else %}<li class="muted">None yet.</li>{% endfor %}</ul></section>
+        <section class="glass card" aria-labelledby="wm"><h2 id="wm">Birthday wishes</h2>
+          <ul class="rows">{% for w in wishes %}<li><span><strong>{{ w.frm }}</strong>{% if w.to %} → {{ w.to }}{% endif %}: {{ w.text }}</span><button class="x" data-del="/admin/wishes/{{ w.id }}/delete" data-what="wish" aria-label="Delete wish from {{ w.frm }}">✕</button></li>{% else %}<li class="muted">None yet.</li>{% endfor %}</ul></section>
+      </div>
+    </section>
+
+    <!-- ACTIVITY -->
+    <section class="panel" id="tab-activity" role="tabpanel" hidden>
+      <div class="ph"><h2>Activity</h2><span class="muted small">Likes, private comments and gifts</span></div>
+      <div class="glass card"><ul id="activity" class="feed" style="max-height:none" aria-live="polite" data-empty="No activity yet."></ul></div>
+    </section>
+
+    <dialog id="resetDlg" class="sheet" aria-labelledby="rt">
+      <h2 id="rt">Send reset link</h2>
+      <p class="muted">For <strong id="rName"></strong> (<span id="rEmail"></span>). One use, expires in 1 hour.</p>
+      <input id="rLink" readonly aria-label="Reset link">
+      <div class="row wrapbtn"><a class="btn primary" id="rMail" href="#">Open email app</a><a class="btn" id="rGmail" href="#" target="_blank" rel="noopener">Open Gmail</a>
+        <button class="btn" id="rCopy" type="button">Copy link</button><button class="btn" id="rClose" type="button">Close</button></div>
+    </dialog>
+  </main>
+</div>
+{% endblock %}
