@@ -1,0 +1,11 @@
+{% extends "base.html" %}{% block title %}Waiting for approval{% endblock %}
+{% block content %}
+<main id="main" class="center">
+  <section class="glass card auth rise" aria-labelledby="t">
+    <div class="logo" aria-hidden="true">{{ '⏳' if user.status == 'pending' else '🚫' }}</div>
+    <h1 id="t">{{ 'Waiting for approval' if user.status == 'pending' else 'Access not approved' }}</h1>
+    <p class="muted">{{ 'The admin will review your request soon. Check back later.' if user.status == 'pending' else 'The admin did not approve this account. Contact the admin if this is a mistake.' }}</p>
+    <form method="post" action="{{ url_for('logout') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn" type="submit">Sign out</button></form>
+  </section>
+</main>
+{% endblock %}

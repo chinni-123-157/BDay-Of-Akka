@@ -1,0 +1,20 @@
+{% extends "base.html" %}{% block title %}Reset password{% endblock %}
+{% block content %}
+<main id="main" class="center">
+  <section class="glass card auth rise" aria-labelledby="t">
+  {% if valid %}
+    <h1 id="t">Set a new password</h1>
+    <form method="post">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <label>New password<input type="password" name="password" minlength="8" maxlength="128" autocomplete="new-password" required></label>
+      <label>Confirm password<input type="password" name="confirm" minlength="8" maxlength="128" autocomplete="new-password" required></label>
+      <button class="btn primary" type="submit">Save password</button>
+    </form>
+  {% else %}
+    <h1 id="t">This link has expired</h1>
+    <p class="muted">Reset links work once and last 1 hour. Ask the admin for a new one.</p>
+    <a class="btn" href="{{ url_for('login') }}">Back to sign in</a>
+  {% endif %}
+  </section>
+</main>
+{% endblock %}

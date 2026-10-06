@@ -1,0 +1,18 @@
+{% extends "base.html" %}{% block title %}Fun questions{% endblock %}
+{% block content %}
+{% include "_ribbon.html" %}
+<main id="main" class="center">
+  <section class="glass card qcard" aria-live="polite">
+    <div class="qtop"><span id="qCount">1 / 10</span><div class="bar"><i id="qBar"></i></div></div>
+    <h1 id="qText" class="telugu">…</h1>
+    <div class="qbtns" id="qBtns">
+      <button class="btn yes" id="yesBtn" type="button">అవును</button>
+      <button class="btn no" id="noBtn" type="button">కాదు</button>
+    </div>
+    <div id="qDone" class="hidden"><h2>అంతే! 🎉</h2><p class="muted">All 10 questions done.</p>
+      <button class="btn primary" type="button" onclick="location.reload()">Play again</button></div>
+  </section>
+  <dialog id="popup" class="sheet" aria-labelledby="popupMsg"><p id="popupMsg" class="telugu"></p><button class="btn primary" id="popupNext" type="button">Next</button></dialog>
+</main>
+{% include "_dock.html" %}
+{% endblock %}

@@ -1,0 +1,8 @@
+<div class="tiles">
+{% for m in items %}
+  <a class="tile" href="{{ url_for('reels') }}#m-{{ m.id }}" aria-label="{{ m.kind|capitalize }} by {{ m.uploader_name }}">
+    {% if m.kind == 'video' %}<video src="{{ m.url }}#t=0.1" muted preload="metadata" playsinline></video><b aria-hidden="true">▶</b>
+    {% else %}<img src="{{ m.url }}" alt="Photo by {{ m.uploader_name }}" loading="lazy">{% endif %}
+  </a>
+{% else %}<p class="muted">Nothing posted yet.</p>{% endfor %}
+</div>

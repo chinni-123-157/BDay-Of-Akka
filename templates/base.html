@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="csrf-token" content="{{ csrf_token() }}">
+<meta name="theme-color" content="#0b1020">
+<title>{% block title %}Birthday Hub{% endblock %}</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+{% set wp = pick_wallpaper() if (user and bday_on and page in ('dashboard','birthday','reels')) else None %}
+<body class="page-{{ page }}{{ ' has-wp' if wp }}" data-page="{{ page }}"{% if wp %} style="--wp:url('{{ wp }}')"{% endif %}>
+<a class="sr skip" href="#main">Skip to content</a>
+{% block content %}{% endblock %}
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
+</body>
+</html>
