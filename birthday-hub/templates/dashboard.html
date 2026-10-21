@@ -3,9 +3,12 @@
 {% include "_ribbon.html" %}
 <main id="main" class="wrap">
   <header class="hero rise">
-    <p class="hello">Hello,</p>
-    <h1>{{ user.full_name.split()[0] }}</h1>
-    <p class="muted">{{ "A birthday is on today. Send a wish below." if bdays else "No birthdays today. Check back soon." }}</p>
+    <span class="avatar" aria-hidden="true">{{ user.full_name[:1] }}</span>
+    <div>
+      <p class="hello">Hello,</p>
+      <h1>{{ user.full_name.split()[0] }}</h1>
+      <p class="muted">{{ "A birthday is on today. Send a wish below." if bdays else "No birthdays today. Check back soon." }}</p>
+    </div>
   </header>
   <div class="grid2">
     <section class="glass card stagger" style="--i:1" aria-labelledby="h1">
