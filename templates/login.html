@@ -1,8 +1,8 @@
 {% extends "base.html" %}{% block title %}Sign in · Birthday Hub{% endblock %}
 {% block content %}
 <main id="main" class="center">
-  <i class="orb o1"></i><i class="orb o2"></i><i class="orb o3"></i>
-  <section class="glass card auth rise" aria-labelledby="t">
+  <div class="auth-shell">{% include "_brand.html" %}
+    <section class="glass card auth rise" aria-labelledby="t">
     <div class="logo" aria-hidden="true">🎂</div>
     <h1 id="t">Sign in to see the content</h1>
     <form method="post" action="{{ url_for('login') }}">
@@ -15,5 +15,6 @@
     <a class="btn google" href="{{ url_for('google_login') }}"><b class="g" aria-hidden="true">G</b> Sign in with Google</a>{% endif %}
     <p class="muted">New here? <a href="{{ url_for('signup') }}">Create an account</a></p>
   </section>
+  </div>
 </main>
 {% endblock %}

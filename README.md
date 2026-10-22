@@ -26,10 +26,17 @@ APP_ENV=development python app.py
 ```
 
 ## Behaviour summary
-- Admin = `ADMIN_USERNAME`/`ADMIN_PASSWORD` (or a Google account listed in `ADMIN_EMAILS`). Nothing is hard-coded.
-- New users start as `pending` and only see the waiting page until the admin approves them.
-- Birthday toggle ON: today's birthday person (by date of birth, or the admin's manual pick) is highlighted on every page,
-  random wallpapers appear for everyone, and the birthday person gets the special page, fun questions and upload rights.
-- Wishes: 50 characters max, 10 messages per user per day (replies count), stored in MongoDB.
-- Password reset: admin clicks Reset password > popup > Open email app / Open Gmail with the one-time link (valid 1 hour).
-- The Gift screen is an animation demo only. It does not process or store any payment.
+- **Admin** = `ADMIN_USERNAME`/`ADMIN_PASSWORD` (or a Google account in `ADMIN_EMAILS`). Nothing is hard-coded.
+- **New users** start as `pending` and only see the waiting page until the admin approves them.
+- **Admin switches** (Overview tab):
+  - *Birthday today*: highlights birthday people on every page and shows random wallpapers to everyone.
+  - *Birthday privileges*: the birthday person can comment privately on posts, post media and play the fun questions.
+  - *Upload for everyone*: any approved member can post. Each member also has their own "Can post" switch (Members tab).
+- **Birthday people**: tick one or more members, or tick none to use each member's date of birth.
+- **Comments**: only the birthday person can write them, and only the post's owner and the admin can read them.
+- **Activity**: likes ("Birthday user Akka liked your post") and comments show for the post's owner; the admin sees everything.
+- **Gifts**: any member can send text, voice or video. All approved members see them on the Gift wall and dashboards.
+- **Deleting** a post, gift, wish, announcement or wallpaper removes the database record, the stored file and related activity.
+- **Wishes**: 50 characters max, 10 messages per user per day (replies count), stored in MongoDB.
+- **Password reset**: admin clicks Reset password > popup > Open email app / Open Gmail with a one-time link (valid 1 hour).
+- Existing databases upgrade automatically on start (`can_upload` column and new settings are added if missing).

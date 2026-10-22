@@ -1,6 +1,7 @@
 {% extends "base.html" %}{% block title %}Reset password{% endblock %}
 {% block content %}
 <main id="main" class="center">
+  <div class="auth-shell">{% include "_brand.html" %}
   <section class="glass card auth rise" aria-labelledby="t">
   {% if valid %}
     <h1 id="t">Set a new password</h1>
@@ -16,5 +17,6 @@
     <a class="btn" href="{{ url_for('login') }}">Back to sign in</a>
   {% endif %}
   </section>
+  </div>
 </main>
 {% endblock %}

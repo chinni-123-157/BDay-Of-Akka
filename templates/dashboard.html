@@ -3,9 +3,12 @@
 {% include "_ribbon.html" %}
 <main id="main" class="wrap">
   <header class="hero rise">
-    <p class="hello">Hello,</p>
-    <h1>{{ user.full_name.split()[0] }}</h1>
-    <p class="muted">{{ "A birthday is on today. Send a wish below." if bdays else "No birthdays today. Check back soon." }}</p>
+    <span class="avatar" aria-hidden="true">{{ user.full_name[:1] }}</span>
+    <div>
+      <p class="hello" data-greet>Hello,</p>
+      <h1>{{ user.full_name.split()[0] }}</h1>
+      <p class="muted">{{ "A birthday is on today. Send a wish below." if bdays else "No birthdays today. Check back soon." }}</p>
+    </div>
   </header>
   <div class="grid2">
     <section class="glass card stagger" style="--i:1" aria-labelledby="h1">
@@ -24,7 +27,13 @@
       <ul id="thread" class="thread" data-mode="mine" aria-live="polite"></ul>
     </section>
     {% endif %}
-    <section class="glass card span2 stagger" style="--i:4" aria-labelledby="h4">
+    {% with idx=4 %}{% include "_activity.html" %}{% endwith %}
+    <section class="glass card stagger" style="--i:5" aria-labelledby="hg">
+      <h2 id="hg">Latest gifts</h2>
+      {% include "_gifts.html" %}
+      <a class="btn sm" href="{{ url_for('gift') }}">Send a gift</a>
+    </section>
+    <section class="glass card span2 stagger" style="--i:6" aria-labelledby="h4">
       <h2 id="h4">Post a clip or photo</h2>
       {% include "_upload.html" %}
       <h3 class="sub">Latest posts</h3>

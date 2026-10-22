@@ -1,6 +1,7 @@
 {% extends "base.html" %}{% block title %}Create account · Birthday Hub{% endblock %}
 {% block content %}
 <main id="main" class="center">
+  <div class="auth-shell wide">{% include "_brand.html" %}
   <section class="glass card auth wide rise" aria-labelledby="t">
     <h1 id="t">Join the party</h1>
     <p class="muted">The admin approves new members before they can see anything.</p>
@@ -20,5 +21,6 @@
     </form>
     <p class="muted">Already a member? <a href="{{ url_for('login') }}">Sign in</a></p>
   </section>
+  </div>
 </main>
 {% endblock %}
